@@ -32,11 +32,21 @@ library
                     -Wall
                     -O2
 
+  default-extensions:
+                      NoImplicitPrelude
+
   hs-source-dirs:
                     src
 
   exposed-modules:
                     Data.GPS.Coordinate
+                    Data.GPS.Coordinate.Coordinate
+                    Data.GPS.Coordinate.DegreesLatitude
+                    Data.GPS.Coordinate.DegreesLongitude
+                    Data.GPS.Coordinate.Latitude
+                    Data.GPS.Coordinate.Longitude
+                    Data.GPS.Coordinate.Minutes
+                    Data.GPS.Coordinate.Seconds
 
 test-suite doctests
   type:
