@@ -30,7 +30,6 @@ library
 
   ghc-options:
                     -Wall
-                    -O2
 
   default-extensions:
                       NoImplicitPrelude
