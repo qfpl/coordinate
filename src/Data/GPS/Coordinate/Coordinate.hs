@@ -1,14 +1,15 @@
 module Data.GPS.Coordinate.Coordinate(
   Coordinate
-, coordinate
-, coordinate'
-, coordinateLat
-, coordinateLon
-, coordinateLatlon
+, HasCoordinate(..)
+, coordinateLatLon
+, coordinateLonLat
+, coordinateDMSLatLon
+, coordinateLatDMSLon
+, coordinateDMSLatDMSLon
 ) where
 
-import Prelude(Eq, Show, (.))
-import Control.Lens(Iso', iso, mapping, swapped, withIso)
+import Prelude(Eq, Show, id, (.))
+import Control.Lens(Iso', Lens', iso, lens, mapping, swapped, withIso)
 import Data.GPS.Coordinate.Latitude
 import Data.GPS.Coordinate.Longitude
 import Data.GPS.Coordinate.DegreesLatitude
@@ -22,28 +23,52 @@ data Coordinate =
     Longitude
   deriving (Eq, Show)
 
-coordinate ::
+coordinateLatLon ::
   Iso' (Latitude, Longitude) Coordinate
-coordinate =
+coordinateLatLon =
   iso (\(lat, lon) -> Coordinate lat lon) (\(Coordinate lat lon) -> (lat, lon))
 
-coordinate' ::
+coordinateLonLat ::
   Iso' (Longitude, Latitude) Coordinate
-coordinate' =
-  swapped . coordinate
+coordinateLonLat =
+  swapped . coordinateLatLon
 
-coordinateLat ::
+coordinateDMSLatLon ::
   Iso' ((DegreesLatitude, Minutes, Seconds), Longitude) Coordinate
-coordinateLat =
-  swapped . mapping latitude . coordinate'
+coordinateDMSLatLon =
+  swapped . mapping dmsLatitude . coordinateLonLat
 
-coordinateLon ::
+coordinateLatDMSLon ::
   Iso' (Latitude, (DegreesLongitude, Minutes, Seconds)) Coordinate
-coordinateLon =
-  mapping longitude . coordinate
+coordinateLatDMSLon =
+  mapping dmsLongitude . coordinateLatLon
 
-coordinateLatlon ::
+coordinateDMSLatDMSLon ::
   Iso' ((DegreesLatitude, Minutes, Seconds), (DegreesLongitude, Minutes, Seconds)) Coordinate
-coordinateLatlon =
-  iso (\((td, tm, ts), (nd, nm, ns)) -> Coordinate (withIso latitude (\k _ -> k (td, tm, ts))) (withIso longitude (\k _ -> k (nd, nm, ns))))
-      (\(Coordinate lat lon) -> (withIso latitude (\_ k -> k lat), withIso longitude (\_ k -> k lon)))
+coordinateDMSLatDMSLon =
+  iso (\((td, tm, ts), (nd, nm, ns)) -> Coordinate (withIso dmsLatitude (\k _ -> k (td, tm, ts))) (withIso dmsLongitude (\k _ -> k (nd, nm, ns))))
+      (\(Coordinate lat lon) -> (withIso dmsLatitude (\_ k -> k lat), withIso dmsLongitude (\_ k -> k lon)))
+
+class HasCoordinate t where
+  coordinate ::
+    Lens' t Coordinate
+
+instance HasCoordinate Coordinate where
+  coordinate =
+    id
+
+instance HasLatitude Coordinate where
+  latitude =
+    lens (\(Coordinate lat _) -> lat) (\(Coordinate _ lon) lat -> Coordinate lat lon)
+
+instance HasLongitude Coordinate where
+  longitude =
+    lens (\(Coordinate _ lon) -> lon) (\(Coordinate lat _) lon -> Coordinate lat lon)
+
+instance HasDegreesLatitude Coordinate where
+  degreesLatitude =
+    latitude . degreesLatitude
+
+instance HasDegreesLongitude Coordinate where
+  degreesLongitude =
+    longitude . degreesLongitude

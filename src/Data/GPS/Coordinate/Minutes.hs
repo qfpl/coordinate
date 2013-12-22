@@ -1,21 +1,30 @@
 module Data.GPS.Coordinate.Minutes(
   Minutes
-, minutes
+, HasMinutes(..)
+, nMinutes
 ) where
 
-import Prelude(Int, Bool(..), Eq, Show, Ord(..), (&&))
+import Prelude(Functor, Int, Bool(..), Eq, Show, Ord(..), (&&), id)
 import Data.Maybe(Maybe(..))
-import Control.Lens(Prism', prism')
+import Control.Lens(Prism', Lens', prism')
 
 newtype Minutes =
   Minutes Int
   deriving (Eq, Show)
 
-minutes ::
+nMinutes ::
   Prism' Int Minutes
-minutes =
+nMinutes =
   prism'
     (\(Minutes i) -> i)
     (\i -> case i >= 0 && i < 60 of
              True -> Just (Minutes i)
              False -> Nothing)
+
+class HasMinutes t where
+  minutes ::
+    Lens' t Minutes
+
+instance HasMinutes Minutes where
+  minutes =
+    id
