@@ -3,9 +3,10 @@ module Data.Geo.Coordinate.Longitude(
 , HasLongitude(..)
 , dmsLongitude
 , fracLongitude
+, radianLongitude
 ) where
 
-import Prelude(Double, Eq, Show, Ord(..), Num(..), Fractional(..), Bool(..), Monad(..), id, (&&), properFraction, fromIntegral)
+import Prelude(Double, Eq, Show, Ord(..), Num(..), Floating(..), Fractional(..), Bool(..), Monad(..), id, (&&), (.), properFraction, fromIntegral)
 import Control.Lens(Iso', Prism', Lens', iso, prism', lens, (#), (^?))
 import Data.Geo.Coordinate.DegreesLongitude
 import Data.Geo.Coordinate.Minutes
@@ -54,7 +55,7 @@ dmsLongitude ::
 dmsLongitude =
   iso (\(d, m, s) -> Longitude d m s) (\(Longitude d m s) -> (d, m, s))
 
--- | A prism on longitude to a double between -180 and 180 inclusive.
+-- | A prism on longitude to a double between -180 and 180 exclusive.
 --
 -- >>> 7 ^? fracLongitude
 -- Just (Longitude (DegreesLongitude 7) (Minutes 0) (Seconds 0.0000))
@@ -99,6 +100,36 @@ fracLongitude =
                  m' <- abs m ^? nMinutes
                  s' <- (abs s * 60) ^? nSeconds
                  return (Longitude d' m' s'))
+
+-- | A prism on longitude to a double between -π and π exclusive.
+--
+-- >>> 0.2 ^? radianLongitude
+-- Just (Longitude (DegreesLongitude 11) (Minutes 27) (Seconds 32.9612))
+--
+-- >>> 1.3 ^? radianLongitude
+-- Just (Longitude (DegreesLongitude 74) (Minutes 29) (Seconds 4.2481))
+--
+-- >>> (-1.3) ^? radianLongitude
+-- Just (Longitude (DegreesLongitude (-74)) (Minutes 29) (Seconds 4.2481))
+--
+-- >>> 3.14159 ^? radianLongitude
+-- Just (Longitude (DegreesLongitude 179) (Minutes 59) (Seconds 59.4527))
+--
+-- >>> 3.15 ^? radianLongitude
+-- Nothing
+--
+-- >>> (-3.15) ^? radianLongitude
+-- Nothing
+--
+-- >>> fmap (radianLongitude #) (do deg <- 7 ^? nDegreesLongitude; min <- 7 ^? nMinutes; sec <- 7 ^? nSeconds; (deg, min, sec) ^? dmsLongitude)
+-- Just 0.12424320205794079
+--
+-- >>> fmap (radianLongitude #) (do deg <- 179 ^? nDegreesLongitude; min <- 15 ^? nMinutes; sec <- 6 ^? nSeconds; (deg, min, sec) ^? dmsLongitude)
+-- Just 3.1285317730207023
+radianLongitude ::
+  Prism' Double Longitude
+radianLongitude =
+  iso (\n -> n * 180 / pi) (\n -> n * pi / 180) . fracLongitude
 
 class HasLongitude t where
   longitude ::

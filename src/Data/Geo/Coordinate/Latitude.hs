@@ -3,9 +3,10 @@ module Data.Geo.Coordinate.Latitude(
 , HasLatitude(..)
 , dmsLatitude
 , fracLatitude
+, radianLatitude
 ) where
 
-import Prelude(Double, Eq, Show, Ord(..), Num(..), Fractional(..), Bool(..), Monad(..), id, (&&), properFraction, fromIntegral)
+import Prelude(Double, Eq, Show, Ord(..), Num(..), Floating(..), Fractional(..), Bool(..), Monad(..), id, (&&), (.), properFraction, fromIntegral)
 import Control.Lens(Iso', Prism', Lens', iso, prism', lens, (#), (^?))
 import Data.Geo.Coordinate.DegreesLatitude
 import Data.Geo.Coordinate.Minutes
@@ -54,7 +55,7 @@ dmsLatitude ::
 dmsLatitude =
   iso (\(d, m, s) -> Latitude d m s) (\(Latitude d m s) -> (d, m, s))
 
--- | A prism on latitude to a double between -90 and 90 inclusive.
+-- | A prism on latitude to a double between -90 and 90 exclusive.
 --
 -- >>> 7 ^? fracLatitude
 -- Just (Latitude (DegreesLatitude 7) (Minutes 0) (Seconds 0.0000))
@@ -99,6 +100,36 @@ fracLatitude =
                  m' <- abs m ^? nMinutes
                  s' <- (abs s * 60) ^? nSeconds
                  return (Latitude d' m' s'))
+
+-- | A prism on latitude to a double between -π/2 and π/2 exclusive.
+--
+-- >>> 0.2 ^? radianLatitude
+-- Just (Latitude (DegreesLatitude 11) (Minutes 27) (Seconds 32.9612))
+--
+-- >>> 1.3 ^? radianLatitude
+-- Just (Latitude (DegreesLatitude 74) (Minutes 29) (Seconds 4.2481))
+--
+-- >>> (-1.3) ^? radianLatitude
+-- Just (Latitude (DegreesLatitude (-74)) (Minutes 29) (Seconds 4.2481))
+--
+-- >>> 1.5707963 ^? radianLatitude
+-- Just (Latitude (DegreesLatitude 89) (Minutes 59) (Seconds 59.9945))
+--
+-- >>> 1.58 ^? radianLatitude
+-- Nothing
+--
+-- >>> (-1.58) ^? radianLatitude
+-- Nothing
+--
+-- >>> fmap (radianLatitude #) (do deg <- 7 ^? nDegreesLatitude; min <- 7 ^? nMinutes; sec <- 7 ^? nSeconds; (deg, min, sec) ^? dmsLatitude)
+-- Just 0.12424320205794079
+--
+-- >>> fmap (radianLatitude #) (do deg <- 89 ^? nDegreesLatitude; min <- 15 ^? nMinutes; sec <- 6 ^? nSeconds; (deg, min, sec) ^? dmsLatitude)
+-- Just 1.5577354462258057
+radianLatitude ::
+  Prism' Double Latitude
+radianLatitude =
+  iso (\n -> n * 180 / pi) (\n -> n * pi / 180) . fracLatitude
 
 class HasLatitude t where
   latitude ::
