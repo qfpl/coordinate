@@ -10,7 +10,7 @@ import Control.Lens(Prism', Lens', prism')
 
 newtype Minutes =
   Minutes Int
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 nMinutes ::
   Prism' Int Minutes

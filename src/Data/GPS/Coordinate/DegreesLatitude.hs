@@ -10,7 +10,7 @@ import Control.Lens(Prism', Lens', prism')
 
 newtype DegreesLatitude =
   DegreesLatitude Int
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 nDegreesLatitude ::
   Prism' Int DegreesLatitude

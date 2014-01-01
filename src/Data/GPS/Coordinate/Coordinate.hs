@@ -8,7 +8,7 @@ module Data.GPS.Coordinate.Coordinate(
 , coordinateDMSLatDMSLon
 ) where
 
-import Prelude(Eq, Show, id, (.))
+import Prelude(Eq, Show, Ord, id, (.))
 import Control.Lens(Iso', Lens', iso, lens, mapping, swapped, withIso)
 import Data.GPS.Coordinate.Latitude
 import Data.GPS.Coordinate.Longitude
@@ -21,7 +21,7 @@ data Coordinate =
   Coordinate
     Latitude
     Longitude
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 coordinateLatLon ::
   Iso' (Latitude, Longitude) Coordinate

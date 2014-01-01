@@ -10,7 +10,7 @@ import Control.Lens(Prism', Lens', prism')
 
 newtype Seconds =
   Seconds Double
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 nSeconds ::
   Prism' Double Seconds

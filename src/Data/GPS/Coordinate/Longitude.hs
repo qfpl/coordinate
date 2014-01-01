@@ -16,7 +16,7 @@ data Longitude =
     DegreesLongitude
     Minutes
     Seconds
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 dmsLongitude ::
   Iso' (DegreesLongitude, Minutes, Seconds) Longitude

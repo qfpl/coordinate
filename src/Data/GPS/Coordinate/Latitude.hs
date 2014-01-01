@@ -16,7 +16,7 @@ data Latitude =
     DegreesLatitude
     Minutes
     Seconds
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 dmsLatitude ::
   Iso' (DegreesLatitude, Minutes, Seconds) Latitude
