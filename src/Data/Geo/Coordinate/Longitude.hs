@@ -5,11 +5,14 @@ module Data.Geo.Coordinate.Longitude(
 , fracLongitude
 ) where
 
-import Prelude(Double, Eq, Show, Ord(..), Num(..), Bool(..), Monad(..), id, (&&), properFraction, fromIntegral)
+import Prelude(Double, Eq, Show, Ord(..), Num(..), Fractional(..), Bool(..), Monad(..), id, (&&), properFraction, fromIntegral)
 import Control.Lens(Iso', Prism', Lens', iso, prism', lens, (#), (^?))
 import Data.Geo.Coordinate.DegreesLongitude
 import Data.Geo.Coordinate.Minutes
 import Data.Geo.Coordinate.Seconds
+
+-- $setup
+-- >>> import Prelude(Functor(..))
 
 data Longitude =
   Longitude
@@ -40,6 +43,12 @@ data Longitude =
 --
 -- >>> do deg <- 179 ^? nDegreesLongitude; min <- 59 ^? nMinutes; sec <- 60 ^? nSeconds; (deg, min, sec) ^? dmsLongitude
 -- Nothing
+--
+-- >>> fmap (dmsLongitude #)  (7 ^? fracLongitude)
+-- Just (DegreesLongitude 7,Minutes 0,Seconds 0.0000)
+--
+-- >>> fmap (dmsLongitude #)  (7.12 ^? fracLongitude)
+-- Just (DegreesLongitude 7,Minutes 7,Seconds 12.0000)
 dmsLongitude ::
   Iso' (DegreesLongitude, Minutes, Seconds) Longitude
 dmsLongitude =
@@ -73,11 +82,17 @@ dmsLongitude =
 --
 -- >>> 179.2 ^? fracLongitude
 -- Just (Longitude (DegreesLongitude 179) (Minutes 11) (Seconds 60.0000))
+--
+-- >>> fmap (fracLongitude #) (do deg <- 7 ^? nDegreesLongitude; min <- 7 ^? nMinutes; sec <- 7 ^? nSeconds; (deg, min, sec) ^? dmsLongitude)
+-- Just 7.118611111111111
+--
+-- >>> fmap (fracLongitude #) (do deg <- 179 ^? nDegreesLongitude; min <- 15 ^? nMinutes; sec <- 6 ^? nSeconds; (deg, min, sec) ^? dmsLongitude)
+-- Just 179.25166666666667
 fracLongitude ::
   Prism' Double Longitude
 fracLongitude =
   prism' (\(Longitude d m s) ->
-    fromIntegral (nDegreesLongitude  # d) + nSeconds # s + fromIntegral (nMinutes # m * 60))
+    fromIntegral (nDegreesLongitude # d) + (fromIntegral (nMinutes # m) / 60) + (nSeconds # s) / 3600)
     (\x -> let (d, z) = properFraction x
                (m, s) = properFraction ((z :: Double) * 60)
            in do d' <- d ^? nDegreesLongitude

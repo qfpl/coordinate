@@ -5,14 +5,14 @@ module Data.Geo.Coordinate.Latitude(
 , fracLatitude
 ) where
 
-import Prelude(Double, Eq, Show, Ord(..), Num(..), Bool(..), Monad(..), id, (&&), properFraction, fromIntegral)
+import Prelude(Double, Eq, Show, Ord(..), Num(..), Fractional(..), Bool(..), Monad(..), id, (&&), properFraction, fromIntegral)
 import Control.Lens(Iso', Prism', Lens', iso, prism', lens, (#), (^?))
 import Data.Geo.Coordinate.DegreesLatitude
 import Data.Geo.Coordinate.Minutes
 import Data.Geo.Coordinate.Seconds
 
 -- $setup
--- >>> import Control.Lens((^?))
+-- >>> import Prelude(Functor(..))
 
 data Latitude =
   Latitude
@@ -43,6 +43,12 @@ data Latitude =
 --
 -- >>> do deg <- 89 ^? nDegreesLatitude; min <- 59 ^? nMinutes; sec <- 60 ^? nSeconds; (deg, min, sec) ^? dmsLatitude
 -- Nothing
+--
+-- >>> fmap (dmsLatitude #)  (7 ^? fracLatitude)
+-- Just (DegreesLatitude 7,Minutes 0,Seconds 0.0000)
+--
+-- >>> fmap (dmsLatitude #)  (7.12 ^? fracLatitude)
+-- Just (DegreesLatitude 7,Minutes 7,Seconds 12.0000)
 dmsLatitude ::
   Iso' (DegreesLatitude, Minutes, Seconds) Latitude
 dmsLatitude =
@@ -76,11 +82,17 @@ dmsLatitude =
 --
 -- >>> 89.2 ^? fracLatitude
 -- Just (Latitude (DegreesLatitude 89) (Minutes 12) (Seconds 0.0000))
+--
+-- >>> fmap (fracLatitude #) (do deg <- 7 ^? nDegreesLatitude; min <- 7 ^? nMinutes; sec <- 7 ^? nSeconds; (deg, min, sec) ^? dmsLatitude)
+-- Just 7.118611111111111
+--
+-- >>> fmap (fracLatitude #) (do deg <- 89 ^? nDegreesLatitude; min <- 15 ^? nMinutes; sec <- 6 ^? nSeconds; (deg, min, sec) ^? dmsLatitude)
+-- Just 89.25166666666667
 fracLatitude ::
   Prism' Double Latitude
 fracLatitude =
   prism' (\(Latitude d m s) ->
-    fromIntegral (nDegreesLatitude # d) + nSeconds # s + fromIntegral (nMinutes # m * 60))
+    fromIntegral (nDegreesLatitude # d) + (fromIntegral (nMinutes # m) / 60) + (nSeconds # s) / 3600)
     (\x -> let (d, z) = properFraction x
                (m, s) = properFraction ((z :: Double) * 60)
            in do d' <- d ^? nDegreesLatitude
