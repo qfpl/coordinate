@@ -1,4 +1,4 @@
-module Data.GPS.Coordinate.DegreesLatitude(
+module Data.Geo.Coordinate.DegreesLatitude(
   DegreesLatitude
 , HasDegreesLatitude(..)
 , nDegreesLatitude

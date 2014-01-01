@@ -1,4 +1,4 @@
-module Data.GPS.Coordinate.Latitude(
+module Data.Geo.Coordinate.Latitude(
   Latitude
 , HasLatitude(..)
 , dmsLatitude
@@ -7,9 +7,9 @@ module Data.GPS.Coordinate.Latitude(
 
 import Prelude(Double, Eq, Show, Ord(..), Num(..), Bool(..), Monad(..), id, (&&), properFraction, fromIntegral)
 import Control.Lens(Iso', Prism', Lens', iso, prism', lens, (#), (^?))
-import Data.GPS.Coordinate.DegreesLatitude
-import Data.GPS.Coordinate.Minutes
-import Data.GPS.Coordinate.Seconds
+import Data.Geo.Coordinate.DegreesLatitude
+import Data.Geo.Coordinate.Minutes
+import Data.Geo.Coordinate.Seconds
 
 -- $setup
 -- >>> import Control.Lens((^?))

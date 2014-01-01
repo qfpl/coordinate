@@ -1,4 +1,4 @@
-module Data.GPS.Coordinate.Longitude(
+module Data.Geo.Coordinate.Longitude(
   Longitude
 , HasLongitude(..)
 , dmsLongitude
@@ -7,9 +7,9 @@ module Data.GPS.Coordinate.Longitude(
 
 import Prelude(Double, Eq, Show, Ord(..), Num(..), Bool(..), Monad(..), id, (&&), properFraction, fromIntegral)
 import Control.Lens(Iso', Prism', Lens', iso, prism', lens, (#), (^?))
-import Data.GPS.Coordinate.DegreesLongitude
-import Data.GPS.Coordinate.Minutes
-import Data.GPS.Coordinate.Seconds
+import Data.Geo.Coordinate.DegreesLongitude
+import Data.Geo.Coordinate.Minutes
+import Data.Geo.Coordinate.Seconds
 
 data Longitude =
   Longitude

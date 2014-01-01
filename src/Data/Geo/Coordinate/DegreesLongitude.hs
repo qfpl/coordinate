@@ -1,4 +1,4 @@
-module Data.GPS.Coordinate.DegreesLongitude(
+module Data.Geo.Coordinate.DegreesLongitude(
   DegreesLongitude
 , HasDegreesLongitude(..)
 , nDegreesLongitude

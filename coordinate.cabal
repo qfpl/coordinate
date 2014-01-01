@@ -1,5 +1,5 @@
 name:               coordinate
-version:            0.0.3
+version:            0.0.4
 license:            BSD3
 license-File:       etc/LICENCE
 author:             Tony Morris <ʇǝu˙sıɹɹoɯʇ@ןןǝʞsɐɥ>
@@ -38,14 +38,14 @@ library
                     src
 
   exposed-modules:
-                    Data.GPS.Coordinate
-                    Data.GPS.Coordinate.Coordinate
-                    Data.GPS.Coordinate.DegreesLatitude
-                    Data.GPS.Coordinate.DegreesLongitude
-                    Data.GPS.Coordinate.Latitude
-                    Data.GPS.Coordinate.Longitude
-                    Data.GPS.Coordinate.Minutes
-                    Data.GPS.Coordinate.Seconds
+                    Data.Geo.Coordinate
+                    Data.Geo.Coordinate.Coordinate
+                    Data.Geo.Coordinate.DegreesLatitude
+                    Data.Geo.Coordinate.DegreesLongitude
+                    Data.Geo.Coordinate.Latitude
+                    Data.Geo.Coordinate.Longitude
+                    Data.Geo.Coordinate.Minutes
+                    Data.Geo.Coordinate.Seconds
 
 test-suite doctests
   type:

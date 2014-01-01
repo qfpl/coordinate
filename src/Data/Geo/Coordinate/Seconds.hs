@@ -1,4 +1,4 @@
-module Data.GPS.Coordinate.Seconds(
+module Data.Geo.Coordinate.Seconds(
   Seconds
 , HasSeconds(..)
 , nSeconds

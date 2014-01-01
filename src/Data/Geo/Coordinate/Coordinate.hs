@@ -1,4 +1,4 @@
-module Data.GPS.Coordinate.Coordinate(
+module Data.Geo.Coordinate.Coordinate(
   Coordinate
 , HasCoordinate(..)
 , coordinateLatLon
@@ -10,12 +10,12 @@ module Data.GPS.Coordinate.Coordinate(
 
 import Prelude(Eq, Show, Ord, id, (.))
 import Control.Lens(Iso', Lens', iso, lens, mapping, swapped, withIso)
-import Data.GPS.Coordinate.Latitude
-import Data.GPS.Coordinate.Longitude
-import Data.GPS.Coordinate.DegreesLatitude
-import Data.GPS.Coordinate.DegreesLongitude
-import Data.GPS.Coordinate.Minutes
-import Data.GPS.Coordinate.Seconds
+import Data.Geo.Coordinate.Latitude
+import Data.Geo.Coordinate.Longitude
+import Data.Geo.Coordinate.DegreesLatitude
+import Data.Geo.Coordinate.DegreesLongitude
+import Data.Geo.Coordinate.Minutes
+import Data.Geo.Coordinate.Seconds
 
 data Coordinate =
   Coordinate

@@ -1,4 +1,4 @@
-module Data.GPS.Coordinate.Minutes(
+module Data.Geo.Coordinate.Minutes(
   Minutes
 , HasMinutes(..)
 , nMinutes
