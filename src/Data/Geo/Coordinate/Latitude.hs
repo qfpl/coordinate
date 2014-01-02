@@ -1,10 +1,10 @@
-module Data.Geo.Coordinate.Latitude(
+module Data.Geo.Coordinate.Latitude {-(
   Latitude
 , HasLatitude(..)
 , dmsLatitude
 , fracLatitude
 , radianLatitude
-) where
+) -} where
 
 import Prelude(Double, Eq, Show, Ord(..), Num(..), Floating(..), Fractional(..), Bool(..), Monad(..), id, (&&), (.), properFraction, fromIntegral)
 import Control.Lens(Iso', Prism', Lens', iso, prism', lens, (#), (^?))
@@ -69,6 +69,12 @@ dmsLatitude =
 -- >>> (-7.12) ^? fracLatitude
 -- Just (Latitude (DegreesLatitude (-7)) (Minutes 7) (Seconds 12.0000))
 --
+-- >>> fmap (fracLatitude #) (7.12 ^? fracLatitude)
+-- Just 7.12
+--
+-- >>> fmap (fracLatitude #) ((-7.12) ^? fracLatitude)
+-- Just (-7.12)
+--
 -- >>> 90 ^? fracLatitude
 -- Nothing
 --
@@ -93,7 +99,9 @@ fracLatitude ::
   Prism' Double Latitude
 fracLatitude =
   prism' (\(Latitude d m s) ->
-    fromIntegral (nDegreesLatitude # d) + (fromIntegral (nMinutes # m) / 60) + (nSeconds # s) / 3600)
+    let p = fromIntegral (nDegreesLatitude # d)
+        q = (fromIntegral (nMinutes # m) / 60) + (nSeconds # s) / 3600
+    in (if p < 0 then (-) else (+)) p q)
     (\x -> let (d, z) = properFraction x
                (m, s) = properFraction ((z :: Double) * 60)
            in do d' <- d ^? nDegreesLatitude

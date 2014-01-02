@@ -69,6 +69,12 @@ dmsLongitude =
 -- >>> (-7.12) ^? fracLongitude
 -- Just (Longitude (DegreesLongitude (-7)) (Minutes 7) (Seconds 12.0000))
 --
+-- >>> fmap (fracLongitude #) (7.12 ^? fracLongitude)
+-- Just 7.12
+--
+-- >>> fmap (fracLongitude #) ((-7.12) ^? fracLongitude)
+-- Just (-7.12)
+--
 -- >>> 180 ^? fracLongitude
 -- Nothing
 --
@@ -93,7 +99,9 @@ fracLongitude ::
   Prism' Double Longitude
 fracLongitude =
   prism' (\(Longitude d m s) ->
-    fromIntegral (nDegreesLongitude # d) + (fromIntegral (nMinutes # m) / 60) + (nSeconds # s) / 3600)
+    let p = fromIntegral (nDegreesLongitude # d)
+        q = (fromIntegral (nMinutes # m) / 60) + (nSeconds # s) / 3600
+    in (if p < 0 then (-) else (+)) p q)
     (\x -> let (d, z) = properFraction x
                (m, s) = properFraction ((z :: Double) * 60)
            in do d' <- d ^? nDegreesLongitude
