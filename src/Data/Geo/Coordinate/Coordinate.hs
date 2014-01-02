@@ -1,6 +1,7 @@
 module Data.Geo.Coordinate.Coordinate(
   Coordinate
 , (.#.)
+, (..#..)
 , HasCoordinate(..)
 , coordinateLatLon
 , coordinateLonLat
@@ -9,8 +10,9 @@ module Data.Geo.Coordinate.Coordinate(
 , coordinateDMSLatDMSLon
 ) where
 
-import Prelude(Eq, Show, Ord, id, (.))
-import Control.Lens(Iso', Lens', iso, lens, mapping, swapped, withIso)
+import Prelude(Eq, Show, Ord, Double, id, return, (.))
+import Data.Maybe(Maybe)
+import Control.Lens(Iso', Lens', iso, lens, mapping, swapped, withIso, (^?))
 import Data.Geo.Coordinate.Latitude
 import Data.Geo.Coordinate.Longitude
 import Data.Geo.Coordinate.DegreesLatitude
@@ -24,12 +26,24 @@ data Coordinate =
     Longitude
   deriving (Eq, Ord, Show)
 
+-- | Build a coordinate from a latitude and longitude.
 (.#.) ::
   Latitude
   -> Longitude
   -> Coordinate
 (.#.) =
   Coordinate
+
+-- | Build a coordinate from a fractional latitude and fractional longitude. Fails
+-- if either are out of range.
+(..#..) ::
+  Double
+  -> Double
+  -> Maybe Coordinate
+lat ..#.. lon =
+  do lat' <- lat ^? fracLatitude
+     lon' <- lon ^? fracLongitude
+     return (lat' .#. lon')
 
 coordinateLatLon ::
   Iso' (Latitude, Longitude) Coordinate
