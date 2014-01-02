@@ -1,5 +1,6 @@
 module Data.Geo.Coordinate.Coordinate(
   Coordinate
+, (.#.)
 , HasCoordinate(..)
 , coordinateLatLon
 , coordinateLonLat
@@ -22,6 +23,13 @@ data Coordinate =
     Latitude
     Longitude
   deriving (Eq, Ord, Show)
+
+(.#.) ::
+  Latitude
+  -> Longitude
+  -> Coordinate
+(.#.) =
+  Coordinate
 
 coordinateLatLon ::
   Iso' (Latitude, Longitude) Coordinate
