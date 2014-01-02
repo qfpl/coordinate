@@ -22,6 +22,11 @@ data Longitude =
     Seconds
   deriving (Eq, Ord, Show)
 
+-- longitude x = Longitude ((x + 180) `mod'` 360 - 180)
+
+
+
+
 -- | An isomorphism on the triple of degrees longitude, minutes, seconds to a longitude.
 --
 -- >>> do deg <- 7 ^? nDegreesLongitude; min <- 7 ^? nMinutes; sec <- 7 ^? nSeconds; (deg, min, sec) ^? dmsLongitude

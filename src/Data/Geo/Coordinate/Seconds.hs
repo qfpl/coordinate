@@ -1,6 +1,7 @@
 module Data.Geo.Coordinate.Seconds(
   Seconds
 , HasSeconds(..)
+, modSeconds
 , nSeconds
 ) where
 
@@ -8,6 +9,7 @@ import Prelude(Double, Bool(..), Eq, Show(..), Ord(..), id, (&&), (++), showPare
 import Data.Maybe(Maybe(..))
 import Control.Lens(Prism', Lens', prism')
 import Text.Printf(printf)
+import Data.Fixed(mod')
 
 -- $setup
 -- >>> import Control.Lens((#), (^?))
@@ -23,6 +25,32 @@ newtype Seconds =
 instance Show Seconds where
   showsPrec n (Seconds d) =
     showParen (n > 10) (showString ("Seconds " ++ printf "%0.4f" d))
+
+-- | Construct seconds such that if the given value is out of bounds,
+-- a modulus is taken to keep it within 0 inclusive and 60 exclusive.
+--
+-- >>> modSeconds 7
+-- Seconds 7.0000
+--
+-- >>> modSeconds 0
+-- Seconds 0.0000
+--
+-- >>> modSeconds (-0.0001)
+-- Seconds 59.9999
+--
+-- >>> modSeconds 60
+-- Seconds 0.0000
+--
+-- >>> modSeconds 59.99999
+-- Seconds 60.0000
+--
+-- >>> modSeconds 59.999
+-- Seconds 59.9990
+modSeconds ::
+  Double
+  -> Seconds
+modSeconds x =
+  Seconds (x `mod'` 60)
 
 -- | A prism on seconds to a double between 0 inclusive and 60 exclusive.
 --

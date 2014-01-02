@@ -2,11 +2,13 @@ module Data.Geo.Coordinate.Minutes(
   Minutes
 , HasMinutes(..)
 , nMinutes
+, modMinutes
 ) where
 
 import Prelude(Functor, Int, Bool(..), Eq, Show, Ord(..), (&&), id)
 import Data.Maybe(Maybe(..))
 import Control.Lens(Prism', Lens', prism')
+import Data.Fixed(mod')
 
 -- $setup
 -- >>> import Control.Lens((#), (^?))
@@ -16,6 +18,29 @@ import Control.Lens(Prism', Lens', prism')
 newtype Minutes =
   Minutes Int
   deriving (Eq, Ord, Show)
+
+-- | Construct minutes such that if the given value is out of bounds,
+-- a modulus is taken to keep it within 0 inclusive and 59 inclusive.
+--
+-- >>> modMinutes 7
+-- Minutes 7
+--
+-- >>> modMinutes 0
+-- Minutes 0
+--
+-- >>> modMinutes 60
+-- Minutes 0
+--
+-- >>> modMinutes 61
+-- Minutes 1
+--
+-- >>> modMinutes 59
+-- Minutes 59
+modMinutes ::
+  Int
+  -> Minutes
+modMinutes x =
+  Minutes (x `mod'` 60)
 
 -- | A prism on minutes to an integer between 0 and 59 inclusive.
 --
