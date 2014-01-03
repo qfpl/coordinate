@@ -1,10 +1,10 @@
-module Data.Geo.Coordinate.Latitude {-(
+module Data.Geo.Coordinate.Latitude(
   Latitude
 , HasLatitude(..)
 , dmsLatitude
 , fracLatitude
 , radianLatitude
-) -} where
+) where
 
 import Prelude(Double, Eq, Show, Ord(..), Num(..), Floating(..), Fractional(..), Bool(..), Monad(..), id, (&&), (.), properFraction, fromIntegral)
 import Control.Lens(Iso', Prism', Lens', iso, prism', lens, (#), (^?))
