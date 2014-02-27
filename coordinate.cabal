@@ -1,7 +1,7 @@
 name:               coordinate
 version:            0.0.9
 license:            BSD3
-license-File:       etc/LICENCE
+license-file:       etc/LICENCE
 author:             Tony Morris <ʇǝu˙sıɹɹoɯʇ@ןןǝʞsɐɥ>
 maintainer:         Tony Morris
 copyright:          Copyright (C) 2013-2014 Tony Morris
