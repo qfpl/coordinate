@@ -1,3 +1,5 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
 module Data.Geo.Coordinate.Minutes(
   Minutes
 , HasMinutes(..)
@@ -5,10 +7,15 @@ module Data.Geo.Coordinate.Minutes(
 , modMinutes
 ) where
 
-import Prelude(Functor, Int, Bool(..), Eq, Show, Ord(..), (&&), id)
-import Data.Maybe(Maybe(..))
+import Control.Category(Category(id))
 import Control.Lens(Prism', Lens', prism')
+import Data.Bool(Bool(True, False), (&&))
+import Data.Maybe(Maybe(Just, Nothing))
+import Data.Eq(Eq)
+import Data.Int(Int)
 import Data.Fixed(mod')
+import Data.Ord(Ord((>=), (<)))
+import Prelude(Show)
 
 -- $setup
 -- >>> import Control.Lens((#), (^?))

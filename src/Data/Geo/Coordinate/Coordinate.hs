@@ -1,3 +1,5 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
 module Data.Geo.Coordinate.Coordinate(
   Coordinate
 , (.#.)
@@ -10,15 +12,19 @@ module Data.Geo.Coordinate.Coordinate(
 , coordinateDMSLatDMSLon
 ) where
 
-import Prelude(Eq, Show, Ord, Double, id, return, (.))
-import Data.Maybe(Maybe)
+import Control.Category(Category(id, (.)))
 import Control.Lens(Iso', Lens', iso, lens, mapping, swapped, withIso, (^?))
+import Control.Monad(Monad(return))
+import Data.Eq(Eq)
 import Data.Geo.Coordinate.Latitude
 import Data.Geo.Coordinate.Longitude
 import Data.Geo.Coordinate.DegreesLatitude
 import Data.Geo.Coordinate.DegreesLongitude
 import Data.Geo.Coordinate.Minutes
 import Data.Geo.Coordinate.Seconds
+import Data.Maybe(Maybe)
+import Data.Ord(Ord)
+import Prelude(Show, Double)
 
 data Coordinate =
   Coordinate

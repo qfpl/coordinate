@@ -1,3 +1,5 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
 module Data.Geo.Coordinate.Seconds(
   Seconds
 , HasSeconds(..)

@@ -1,3 +1,5 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
 module Data.Geo.Coordinate.Latitude(
   Latitude
 , HasLatitude(..)
@@ -6,11 +8,15 @@ module Data.Geo.Coordinate.Latitude(
 , radianLatitude
 ) where
 
-import Prelude(Double, Eq, Show, Ord(..), Num(..), Floating(..), Fractional(..), Bool(..), Monad(..), id, (&&), (.), properFraction, fromIntegral)
+import Control.Category(Category(id, (.)))
 import Control.Lens(Iso', Prism', Lens', iso, prism', lens, (#), (^?))
-import Data.Geo.Coordinate.DegreesLatitude
-import Data.Geo.Coordinate.Minutes
-import Data.Geo.Coordinate.Seconds
+import Control.Monad(Monad(return))
+import Data.Eq(Eq)
+import Data.Geo.Coordinate.DegreesLatitude(HasDegreesLatitude(degreesLatitude), DegreesLatitude, nDegreesLatitude)
+import Data.Geo.Coordinate.Minutes(HasMinutes(minutes), Minutes, nMinutes)
+import Data.Geo.Coordinate.Seconds(HasSeconds(seconds), Seconds, nSeconds)
+import Data.Ord(Ord((<)))
+import Prelude(Double, Show, Num((+), (*), (-), abs), Floating(pi), Fractional((/)), properFraction, fromIntegral)
 
 -- $setup
 -- >>> import Prelude(Functor(..))
