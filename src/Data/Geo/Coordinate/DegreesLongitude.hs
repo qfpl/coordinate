@@ -8,7 +8,7 @@ module Data.Geo.Coordinate.DegreesLongitude(
 
 import Control.Category(Category(id))
 import Control.Lens(Prism', Lens', prism')
-import Data.Bool(Bool(True, False), (&&))
+import Data.Bool((&&))
 import Data.Eq(Eq)
 import Data.Int(Int)
 import Data.Maybe(Maybe(Just, Nothing))
@@ -50,9 +50,9 @@ nDegreesLongitude ::
 nDegreesLongitude  =
   prism'
     (\(DegreesLongitude i) -> i)
-    (\i -> case i > -180 && i < 180 of
-             True -> Just (DegreesLongitude i)
-             False -> Nothing)
+    (\i -> if i > -180 && i < 180
+             then Just (DegreesLongitude i)
+             else Nothing)
 
 class HasDegreesLongitude t where
   degreesLongitude ::

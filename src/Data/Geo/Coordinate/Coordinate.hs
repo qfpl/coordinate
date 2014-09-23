@@ -28,7 +28,7 @@ import Data.Geo.Coordinate.Minutes(Minutes)
 import Data.Geo.Coordinate.Seconds(Seconds)
 import Data.Maybe(Maybe)
 import Data.Ord(Ord)
-import Data.Tuple(curry)
+import Data.Tuple(curry, uncurry)
 import Prelude(Show, Double)
 
 data Coordinate =
@@ -99,7 +99,7 @@ radianCoordinate =
 coordinateLatLon ::
   Iso' (Latitude, Longitude) Coordinate
 coordinateLatLon =
-  iso (\(lat, lon) -> Coordinate lat lon) (\(Coordinate lat lon) -> (lat, lon))
+  iso (uncurry Coordinate) (\(Coordinate lat lon) -> (lat, lon))
 
 coordinateLonLat ::
   Iso' (Longitude, Latitude) Coordinate

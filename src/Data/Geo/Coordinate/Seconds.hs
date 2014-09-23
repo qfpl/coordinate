@@ -7,11 +7,16 @@ module Data.Geo.Coordinate.Seconds(
 , nSeconds
 ) where
 
-import Prelude(Double, Bool(..), Eq, Show(..), Ord(..), id, (&&), (++), showParen, showString)
-import Data.Maybe(Maybe(..))
+import Control.Category(Category(id))
 import Control.Lens(Prism', Lens', prism')
-import Text.Printf(printf)
+import Data.Bool((&&))
+import Data.Eq(Eq)
 import Data.Fixed(mod')
+import Data.Ord(Ord((>), (>=), (<)))
+import Data.Maybe(Maybe(Just, Nothing))
+import Data.List((++))
+import Prelude(Double, Show(showsPrec), showParen, showString)
+import Text.Printf(printf)
 
 -- $setup
 -- >>> import Control.Lens((#), (^?))
@@ -77,9 +82,9 @@ nSeconds ::
 nSeconds =
   prism'
     (\(Seconds d) -> d)
-    (\d -> case d >= 0 && d < 60 of
-             True -> Just (Seconds d)
-             False -> Nothing)
+    (\d -> if d >= 0 && d < 60
+             then Just (Seconds d)
+             else Nothing)
 
 class HasSeconds t where
   seconds ::

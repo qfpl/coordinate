@@ -9,7 +9,7 @@ module Data.Geo.Coordinate.Minutes(
 
 import Control.Category(Category(id))
 import Control.Lens(Prism', Lens', prism')
-import Data.Bool(Bool(True, False), (&&))
+import Data.Bool((&&))
 import Data.Maybe(Maybe(Just, Nothing))
 import Data.Eq(Eq)
 import Data.Int(Int)
@@ -69,9 +69,9 @@ nMinutes ::
 nMinutes =
   prism'
     (\(Minutes i) -> i)
-    (\i -> case i >= 0 && i < 60 of
-             True -> Just (Minutes i)
-             False -> Nothing)
+    (\i -> if i >= 0 && i < 60
+             then Just (Minutes i)
+             else Nothing)
 
 class HasMinutes t where
   minutes ::
