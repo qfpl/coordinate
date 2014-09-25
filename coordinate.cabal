@@ -1,7 +1,7 @@
 name:               coordinate
 version:            0.0.10
 license:            BSD3
-license-file:       etc/LICENCE
+license-file:       LICENCE
 author:             Tony Morris <ʇǝu˙sıɹɹoɯʇ@ןןǝʞsɐɥ>
 maintainer:         Tony Morris
 copyright:          Copyright (C) 2013-2014 Tony Morris
@@ -12,6 +12,7 @@ homepage:           https://github.com/tonymorris/coordinate
 bug-reports:        https://github.com/tonymorris/coordinate/issues
 cabal-version:      >= 1.10
 build-type:         Custom
+extra-source-files: changelog
 
 source-repository   head
   type:             git
