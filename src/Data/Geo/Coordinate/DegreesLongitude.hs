@@ -1,13 +1,15 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Data.Geo.Coordinate.DegreesLongitude(
   DegreesLongitude
-, HasDegreesLongitude(..)
-, nDegreesLongitude
+, AsDegreesLongitude(..)
 ) where
 
+import Control.Applicative(Applicative)
 import Control.Category(Category(id))
-import Control.Lens(Prism', Lens', prism')
+import Control.Lens(Optic', Choice, prism')
 import Data.Bool((&&))
 import Data.Eq(Eq)
 import Data.Int(Int)
@@ -24,40 +26,39 @@ newtype DegreesLongitude =
   DegreesLongitude Int
   deriving (Eq, Ord, Show)
 
+class AsDegreesLongitude p f s where
+  _DegreesLongitude ::
+    Optic' p f s DegreesLongitude
+
+instance AsDegreesLongitude p f DegreesLongitude where
+  _DegreesLongitude =
+    id
+
 -- | A prism on degrees longitude to an integer between -180 and 180 exclusive.
 --
--- >>> 7 ^? nDegreesLongitude
+-- >>> (7 :: Int) ^? _DegreesLongitude
 -- Just (DegreesLongitude 7)
 --
--- >>> 0 ^? nDegreesLongitude
+-- >>> (0 :: Int) ^? _DegreesLongitude
 -- Just (DegreesLongitude 0)
 --
--- >>> 179 ^? nDegreesLongitude
+-- >>> (179 :: Int) ^? _DegreesLongitude
 -- Just (DegreesLongitude 179)
 --
--- >>> 180 ^? nDegreesLongitude
+-- >>> (180 :: Int) ^? _DegreesLongitude
 -- Nothing
 --
--- >>> (-179) ^? nDegreesLongitude
+-- >>> (-179 :: Int) ^? _DegreesLongitude
 -- Just (DegreesLongitude (-179))
 --
--- >>> (-180) ^? nDegreesLongitude
+-- >>> (-180 :: Int) ^? _DegreesLongitude
 -- Nothing
 --
--- prop> all (\m -> nDegreesLongitude # m == n) (n ^? nDegreesLongitude)
-nDegreesLongitude ::
-  Prism' Int DegreesLongitude
-nDegreesLongitude  =
-  prism'
-    (\(DegreesLongitude i) -> i)
-    (\i -> if i > -180 && i < 180
-             then Just (DegreesLongitude i)
-             else Nothing)
-
-class HasDegreesLongitude t where
-  degreesLongitude ::
-    Lens' t DegreesLongitude
-
-instance HasDegreesLongitude DegreesLongitude where
-  degreesLongitude =
-    id
+-- prop> all (\m -> _DegreesLongitude # m == (n :: Int)) (n ^? _DegreesLongitude)
+instance (Choice p, Applicative f) => AsDegreesLongitude p f Int where
+  _DegreesLongitude =
+    prism'
+      (\(DegreesLongitude i) -> i)
+      (\i -> if i > -180 && i < 180
+               then Just (DegreesLongitude i)
+               else Nothing)

@@ -1,35 +1,31 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
 
 module Data.Geo.Coordinate.Coordinate(
   Coordinate
+, AsCoordinate(..)
 , (.#.)
 , (<°>)
-, (<㎭>)
-, fracCoordinate
-, radianCoordinate
-, HasCoordinate(..)
-, coordinateLatLon
-, coordinateLonLat
-, coordinateDMSLatLon
-, coordinateLatDMSLon
-, coordinateDMSLatDMSLon
 ) where
 
+import Control.Applicative(Applicative)
 import Control.Category(Category(id, (.)))
-import Control.Lens(Iso', Lens', Prism', iso, lens, prism', mapping, swapped, withIso, (^?), (#))
+import Control.Lens(Choice, swapped, Profunctor, Optic', (^.), iso, lens, prism', swapped, (^?), (#))
 import Control.Monad(Monad(return))
 import Data.Eq(Eq)
-import Data.Geo.Coordinate.Latitude(HasLatitude(latitude), Latitude, dmsLatitude, radianLatitude, fracLatitude)
-import Data.Geo.Coordinate.Longitude(HasLongitude(longitude), Longitude, dmsLongitude, radianLongitude, fracLongitude)
-import Data.Geo.Coordinate.DegreesLatitude(HasDegreesLatitude(degreesLatitude), DegreesLatitude)
-import Data.Geo.Coordinate.DegreesLongitude(HasDegreesLongitude(degreesLongitude), DegreesLongitude)
+import Data.Geo.Coordinate.Latitude(AsLatitude(_Latitude), Latitude)
+import Data.Geo.Coordinate.Longitude(AsLongitude(_Longitude), Longitude)
+import Data.Geo.Coordinate.DegreesLatitude(AsDegreesLatitude(_DegreesLatitude), DegreesLatitude)
+import Data.Geo.Coordinate.DegreesLongitude(AsDegreesLongitude(_DegreesLongitude), DegreesLongitude)
 import Data.Geo.Coordinate.Minutes(Minutes)
 import Data.Geo.Coordinate.Seconds(Seconds)
 import Data.Maybe(Maybe)
 import Data.Ord(Ord)
 import Data.Tuple(curry, uncurry)
-import Prelude(Show, Double)
+import Prelude(Double, Functor, Show, Double)
 
 data Coordinate =
   Coordinate
@@ -52,96 +48,109 @@ data Coordinate =
   -> Double
   -> Maybe Coordinate
 (<°>) =
-  curry (^? fracCoordinate)
+  curry (^? _Coordinate)
 
--- | Build a coordinate from a radian latitude and fractional longitude. Fails
--- if either are out of range.
-(<㎭>) ::
-  Double
-  -> Double
-  -> Maybe Coordinate
-(<㎭>) =
-  curry (^? radianCoordinate)
- 
-coordinatePrism ::
-  Prism' Double Latitude
-  -> Prism' Double Longitude
-  -> Prism' (Double, Double) Coordinate
-coordinatePrism f g =
-  prism'
-    (\x -> let (b, d) = coordinateLatLon # x
-           in (f # b, g # d))
-    (\(lat, lon) ->
-      do lat' <- lat ^? f
-         lon' <- lon ^? g
-         return (Coordinate lat' lon'))
+class AsCoordinate p f s where
+  _Coordinate ::
+    Optic' p f s Coordinate
 
--- | A prism on the pair (below) to a coordinate:
--- 
--- * a fractional latitude to a double between -90 and 90 exclusive.
---
--- * a fractional longitude to a double between -180 and 180 exclusive.
-fracCoordinate ::
-  Prism' (Double, Double) Coordinate
-fracCoordinate =
-  coordinatePrism fracLatitude fracLongitude
-
--- | A prism on the pair (below) to a coordinate:
--- 
--- * a radian latitude to a double between -π/2 and π/2 exclusive.
---
--- * a radian longitude to a double between -π and π exclusive.
-radianCoordinate ::
-  Prism' (Double, Double) Coordinate
-radianCoordinate =
-  coordinatePrism radianLatitude radianLongitude
-  
-coordinateLatLon ::
-  Iso' (Latitude, Longitude) Coordinate
-coordinateLatLon =
-  iso (uncurry Coordinate) (\(Coordinate lat lon) -> (lat, lon))
-
-coordinateLonLat ::
-  Iso' (Longitude, Latitude) Coordinate
-coordinateLonLat =
-  swapped . coordinateLatLon
-
-coordinateDMSLatLon ::
-  Iso' ((DegreesLatitude, Minutes, Seconds), Longitude) Coordinate
-coordinateDMSLatLon =
-  swapped . mapping dmsLatitude . coordinateLonLat
-
-coordinateLatDMSLon ::
-  Iso' (Latitude, (DegreesLongitude, Minutes, Seconds)) Coordinate
-coordinateLatDMSLon =
-  mapping dmsLongitude . coordinateLatLon
-
-coordinateDMSLatDMSLon ::
-  Iso' ((DegreesLatitude, Minutes, Seconds), (DegreesLongitude, Minutes, Seconds)) Coordinate
-coordinateDMSLatDMSLon =
-  iso (\((td, tm, ts), (nd, nm, ns)) -> Coordinate (withIso dmsLatitude (\k _ -> k (td, tm, ts))) (withIso dmsLongitude (\k _ -> k (nd, nm, ns))))
-      (\(Coordinate lat lon) -> (withIso dmsLatitude (\_ k -> k lat), withIso dmsLongitude (\_ k -> k lon)))
-
-class HasCoordinate t where
-  coordinate ::
-    Lens' t Coordinate
-
-instance HasCoordinate Coordinate where
-  coordinate =
+instance AsCoordinate p f Coordinate where
+  _Coordinate =
     id
 
-instance HasLatitude Coordinate where
-  latitude =
+instance (Profunctor p, Functor f) => AsCoordinate p f (Latitude, Longitude) where
+  _Coordinate =
+    iso (uncurry Coordinate) (\(Coordinate lat lon) -> (lat, lon))
+
+instance (Profunctor p, Functor f) => AsCoordinate p f (Longitude, Latitude) where
+  _Coordinate =
+    swapped . _Coordinate
+
+instance (Profunctor p, Functor f) => AsCoordinate p f ((DegreesLatitude, Minutes, Seconds), Longitude) where
+  _Coordinate =
+    iso
+      (\(lat, lon) -> Coordinate (lat ^. _Latitude) lon)
+      (\(Coordinate lat lon) -> (_Latitude # lat, lon))
+
+instance (Profunctor p, Functor f) => AsCoordinate p f (Longitude, (DegreesLatitude, Minutes, Seconds)) where
+  _Coordinate =
+    swapped . _Coordinate
+
+instance (Profunctor p, Functor f) => AsCoordinate p f (Latitude, (DegreesLongitude, Minutes, Seconds)) where
+  _Coordinate =
+    iso
+      (\(lat, lon) -> Coordinate lat (lon ^. _Longitude))
+      (\(Coordinate lat lon) -> (lat, _Longitude # lon))
+
+instance (Profunctor p, Functor f) => AsCoordinate p f ((DegreesLongitude, Minutes, Seconds), Latitude) where
+  _Coordinate =
+    swapped . _Coordinate
+
+instance (Profunctor p, Functor f) => AsCoordinate p f ((DegreesLatitude, Minutes, Seconds), (DegreesLongitude, Minutes, Seconds)) where
+  _Coordinate =
+    iso
+      (\(lat, lon) -> Coordinate (lat ^. _Latitude) (lon ^. _Longitude))
+      (\(Coordinate lat lon) -> (_Latitude # lat, _Longitude # lon))
+
+instance (Profunctor p, Functor f) => AsCoordinate p f ((DegreesLongitude, Minutes, Seconds), (DegreesLatitude, Minutes, Seconds)) where
+  _Coordinate =
+    swapped . _Coordinate
+
+instance (Choice p, Applicative f) => AsCoordinate p f (Double, Double) where
+  _Coordinate =
+    prism'
+      (\(Coordinate lat lon) -> (_Latitude # lat, _Longitude # lon))
+      (\(lat, lon) ->
+        do lat' <- lat ^? _Latitude
+           lon' <- lon ^? _Longitude
+           return (Coordinate lat' lon'))
+
+instance (Choice p, Applicative f) => AsCoordinate p f (Latitude, Double) where
+  _Coordinate =
+    prism'
+      (\(Coordinate lat lon) -> (lat, _Longitude # lon))
+      (\(lat, lon) ->
+        do lon' <- lon ^? _Longitude
+           return (Coordinate lat lon'))
+
+instance (Choice p, Applicative f) => AsCoordinate p f (Double, Longitude) where
+  _Coordinate =
+    prism'
+      (\(Coordinate lat lon) -> (_Latitude # lat, lon))
+      (\(lat, lon) ->
+        do lat' <- lat ^? _Latitude
+           return (Coordinate lat' lon))
+
+instance (Choice p, Applicative f) => AsCoordinate p f ((DegreesLatitude, Minutes, Seconds), Double) where
+  _Coordinate =
+    prism'
+      (\(Coordinate lat lon) -> (_Latitude # lat, _Longitude # lon))
+      (\(lat, lon) ->
+        do lat' <- lat ^? _Latitude
+           lon' <- lon ^? _Longitude
+           return (Coordinate lat' lon'))
+
+instance (Choice p, Applicative f) => AsCoordinate p f (Double, (DegreesLongitude, Minutes, Seconds)) where
+  _Coordinate =
+    prism'
+      (\(Coordinate lat lon) -> (_Latitude # lat, _Longitude # lon))
+      (\(lat, lon) ->
+        do lat' <- lat ^? _Latitude
+           lon' <- lon ^? _Longitude
+           return (Coordinate lat' lon'))
+
+instance (p ~ (->), Functor f) => AsLatitude p f Coordinate where
+  _Latitude =
     lens (\(Coordinate lat _) -> lat) (\(Coordinate _ lon) lat -> Coordinate lat lon)
+    
+instance (p ~ (->), Functor f) => AsDegreesLatitude p f Coordinate where
+  _DegreesLatitude =
+    _Latitude . _DegreesLatitude
 
-instance HasLongitude Coordinate where
-  longitude =
+instance (p ~ (->), Functor f) => AsLongitude p f Coordinate where
+  _Longitude =
     lens (\(Coordinate _ lon) -> lon) (\(Coordinate lat _) lon -> Coordinate lat lon)
-
-instance HasDegreesLatitude Coordinate where
-  degreesLatitude =
-    latitude . degreesLatitude
-
-instance HasDegreesLongitude Coordinate where
-  degreesLongitude =
-    longitude . degreesLongitude
+    
+instance (p ~ (->), Functor f) => AsDegreesLongitude p f Coordinate where
+  _DegreesLongitude =
+    _Longitude . _DegreesLongitude

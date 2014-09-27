@@ -1,0 +1,47 @@
+<dibblego> suppose I have a structure T which has iso to U, then S which has a Lens T U
+<edwardk> k
+<dibblego> and another which has a Prism, say Prism V U
+<dibblego> and then, I wonder if it is a good idea to overload names
+<dibblego> once it starts getting out of hand a bit
+<dibblego> more and more things "has a Lens" or "has a Prism" or "has Iso"
+<edwardk> i tend to use foo as the lens/iso and _Foo as the prism/iso  when you have prisms or lenses and it isn't clear it gets messy
+<dibblego> ok, yeah that sounds like a better idea
+<edwardk> you can set up careful overloading to make something devolve to a prism or an iso on one side
+<edwardk> or in another use case devolve to a lens to an iso
+<dibblego> but, what if multiple things have that lens?
+<edwardk> we usually call the prism/iso case 'AsFoo' and the lens/iso case 'HasFoo'
+<dibblego> you mean, the type-class name?
+<edwardk> yeah
+<dibblego> ok, I was thinking of something like that too
+<dibblego> even though there might be one instance at this time, the chance of another instance higher up is very high
+<dibblego> that's why it started getting out of hand
+<edwardk> class AsFoo p f s where _Foo :: Optic' p f s Foo
+<dibblego> but, this seems more systematic
+<edwardk> instance AsFoo p f Foo where _Foo = id; -- note that is a full Equality, not just an Iso!
+<edwardk> instance (Profunctor p, Functor f) => AsFoo p f Foo2 where ... for Foo2 isomorphic to Foo
+<edwardk> instance (Choice p, Applicative f) => AsFoo p f Bar where -- for Bar which has a prism to a Foo
+<dibblego> oh yeah I see
+<edwardk> class HasFoo p f s where foo :: Optic' p f s Foo
+<dibblego> instance Functor f => HasFoo p f Foo
+<edwardk> instance (p ~ (->), Functor f) => HasFoo p f s where -- for the lens case
+<edwardk> er
+<edwardk> instance (p ~ (->), Functor f) => HasFoo p f Baz where -- for Baz which has a lens to get out a Foo
+<edwardk> and you can build indexed lenses, etc. this way as well
+<edwardk> instance (Indexable Int p, Functor f) => HasFoo p f Baz where ...
+<edwardk> its annoying the p and f leak into the signature of HasFoo and AsFoo, and requires some expert use, but you _can_ build these this way
+<edwardk> we used to do it for the AsFoo classes in Control.Exception.Lens
+<edwardk> we reverted to simpler forms a little while ago
+<dibblego> which do you call simpler forms?
+<edwardk> so you can look through old versions of that maybe 4.2ish to get ideas
+<edwardk> class AsFoo s where _Foo :: Prism' s Foo
+<dibblego> oh right, why revert to this?
+<edwardk> saying 'fuck it' its a prism
+<edwardk> because it can be easier for users
+<dibblego> yeah ok
+<edwardk> and its easier to work with polymorphically
+<dibblego> class IsFoo s where _IsFoo :: Iso' s Foo ?
+<edwardk> i tend to just use AsFoo and HasFoo myself
+<edwardk> ymmv
+<dibblego> ok, I guess overloading the iso has limited value
+<edwardk> ok, heading to bed
+<dibblego> cheers mate scratchya

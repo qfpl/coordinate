@@ -1,14 +1,16 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Data.Geo.Coordinate.Seconds(
   Seconds
-, HasSeconds(..)
+, AsSeconds(..)
 , modSeconds
-, nSeconds
 ) where
 
+import Control.Applicative(Applicative)
 import Control.Category(Category(id))
-import Control.Lens(Prism', Lens', prism')
+import Control.Lens(prism', Optic', Choice)
 import Data.Bool((&&))
 import Data.Eq(Eq)
 import Data.Fixed(mod')
@@ -19,7 +21,7 @@ import Prelude(Double, Show(showsPrec), showParen, showString)
 import Text.Printf(printf)
 
 -- $setup
--- >>> import Control.Lens((#), (^?))
+-- >>> import Control.Lens((#), (^?), (^.))
 -- >>> import Data.Foldable(all)
 -- >>> import Prelude(Eq(..))
 
@@ -33,8 +35,41 @@ instance Show Seconds where
   showsPrec n (Seconds d) =
     showParen (n > 10) (showString ("Seconds " ++ printf "%0.4f" d))
 
--- | Construct seconds such that if the given value is out of bounds,
--- a modulus is taken to keep it within 0 inclusive and 60 exclusive.
+class AsSeconds p f s where
+  _Seconds ::
+    Optic' p f s Seconds
+
+instance AsSeconds p f Seconds where
+  _Seconds =
+    id
+
+-- | A prism on seconds to a double between 0 inclusive and 60 exclusive.
+--
+-- >>> (7 :: Double) ^? _Seconds
+-- Just (Seconds 7.0000)
+--
+-- >>> (0 :: Double) ^? _Seconds
+-- Just (Seconds 0.0000)
+--
+-- >>> (59 :: Double) ^? _Seconds
+-- Just (Seconds 59.0000)
+--
+-- >>> (59.99 :: Double) ^? _Seconds
+-- Just (Seconds 59.9900)
+--
+-- >>> (60 :: Double) ^? _Seconds
+-- Nothing
+--
+-- prop> all (\m -> _Seconds # m == (n :: Double)) (n ^? _Seconds)
+instance (Choice p, Applicative f) => AsSeconds p f Double where
+  _Seconds =
+    prism'
+      (\(Seconds d) -> d)
+      (\d -> if d >= 0 && d < 60
+               then Just (Seconds d)
+               else Nothing)
+
+-- | Setting a value `>= 60` will get that value `(`mod` 60)`.
 --
 -- >>> modSeconds 7
 -- Seconds 7.0000
@@ -58,38 +93,3 @@ modSeconds ::
   -> Seconds
 modSeconds x =
   Seconds (x `mod'` 60)
-
--- | A prism on seconds to a double between 0 inclusive and 60 exclusive.
---
--- >>> 7 ^? nSeconds
--- Just (Seconds 7.0000)
---
--- >>> 0 ^? nSeconds
--- Just (Seconds 0.0000)
---
--- >>> 59 ^? nSeconds
--- Just (Seconds 59.0000)
---
--- >>> 59.99 ^? nSeconds
--- Just (Seconds 59.9900)
---
--- >>> 60 ^? nSeconds
--- Nothing
---
--- prop> all (\m -> nSeconds # m == n) (n ^? nSeconds)
-nSeconds ::
-  Prism' Double Seconds
-nSeconds =
-  prism'
-    (\(Seconds d) -> d)
-    (\d -> if d >= 0 && d < 60
-             then Just (Seconds d)
-             else Nothing)
-
-class HasSeconds t where
-  seconds ::
-    Lens' t Seconds
-
-instance HasSeconds Seconds where
-  seconds =
-    id

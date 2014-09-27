@@ -1,14 +1,16 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Data.Geo.Coordinate.Minutes(
   Minutes
-, HasMinutes(..)
-, nMinutes
+, AsMinutes(..)
 , modMinutes
 ) where
 
+import Control.Applicative(Applicative)
 import Control.Category(Category(id))
-import Control.Lens(Prism', Lens', prism')
+import Control.Lens(Optic', Choice, prism')
 import Data.Bool((&&))
 import Data.Maybe(Maybe(Just, Nothing))
 import Data.Eq(Eq)
@@ -18,7 +20,7 @@ import Data.Ord(Ord((>=), (<)))
 import Prelude(Show)
 
 -- $setup
--- >>> import Control.Lens((#), (^?))
+-- >>> import Control.Lens((#), (^?), (^.))
 -- >>> import Data.Foldable(all)
 -- >>> import Prelude(Eq(..))
 
@@ -26,8 +28,38 @@ newtype Minutes =
   Minutes Int
   deriving (Eq, Ord, Show)
 
--- | Construct minutes such that if the given value is out of bounds,
--- a modulus is taken to keep it within 0 inclusive and 59 inclusive.
+class AsMinutes p f s where
+  _Minutes ::
+    Optic' p f s Minutes
+
+instance AsMinutes p f Minutes where
+  _Minutes =
+    id
+
+-- | A prism on minutes to an integer between 0 and 59 inclusive.
+--
+-- >>> (7 :: Int) ^? _Minutes
+-- Just (Minutes 7)
+--
+-- >>> (0 :: Int) ^? _Minutes
+-- Just (Minutes 0)
+--
+-- >>> (59 :: Int) ^? _Minutes
+-- Just (Minutes 59)
+--
+-- >>> (60 :: Int) ^? _Minutes
+-- Nothing
+--
+-- prop> all (\m -> _Minutes # m == (n :: Int)) (n ^? _Minutes)
+instance (Choice p, Applicative f) => AsMinutes p f Int where
+  _Minutes =
+    prism'
+      (\(Minutes i) -> i)
+      (\i -> if i >= 0 && i < 60
+               then Just (Minutes i)
+               else Nothing)       
+
+-- | Setting a value `>= 60` will get that value `(`mod` 60)`.
 --
 -- >>> modMinutes 7
 -- Minutes 7
@@ -38,45 +70,13 @@ newtype Minutes =
 -- >>> modMinutes 60
 -- Minutes 0
 --
--- >>> modMinutes 61
+-- >>> modMinutes 1
 -- Minutes 1
 --
 -- >>> modMinutes 59
--- Minutes 59
+-- Minutes 59 
 modMinutes ::
   Int
   -> Minutes
 modMinutes x =
   Minutes (x `mod'` 60)
-
--- | A prism on minutes to an integer between 0 and 59 inclusive.
---
--- >>> 7 ^? nMinutes
--- Just (Minutes 7)
---
--- >>> 0 ^? nMinutes
--- Just (Minutes 0)
---
--- >>> 59 ^? nMinutes
--- Just (Minutes 59)
---
--- >>> 60 ^? nMinutes
--- Nothing
---
--- prop> all (\m -> nMinutes # m == n) (n ^? nMinutes)
-nMinutes ::
-  Prism' Int Minutes
-nMinutes =
-  prism'
-    (\(Minutes i) -> i)
-    (\i -> if i >= 0 && i < 60
-             then Just (Minutes i)
-             else Nothing)
-
-class HasMinutes t where
-  minutes ::
-    Lens' t Minutes
-
-instance HasMinutes Minutes where
-  minutes =
-    id
