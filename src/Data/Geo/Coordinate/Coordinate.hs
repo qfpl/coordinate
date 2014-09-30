@@ -17,6 +17,7 @@ import Control.Category(Category(id, (.)))
 import Control.Lens(Identity, Const, Prism', Choice, swapped, Profunctor, Optic', (^.), iso, lens, prism', swapped, (^?), (#))
 import Control.Monad(Monad(return))
 import Data.Eq(Eq)
+import Data.Functor(Functor)
 import Data.Geo.Coordinate.Latitude(AsLatitude(_Latitude), Latitude)
 import Data.Geo.Coordinate.Longitude(AsLongitude(_Longitude), Longitude)
 import Data.Geo.Coordinate.DegreesLatitude(AsDegreesLatitude(_DegreesLatitude), DegreesLatitude)
@@ -28,7 +29,7 @@ import Data.Monoid(First)
 import Data.Ord(Ord)
 import Data.Tagged(Tagged)
 import Data.Tuple(curry, uncurry)
-import Prelude(Double, Functor, Show, Double)
+import Prelude(Show, Double)
 
 data Coordinate =
   Coordinate

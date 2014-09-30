@@ -13,11 +13,12 @@ import Control.Category(Category(id))
 import Control.Lens(Choice, Profunctor, Optic', iso, prism', lens, (#), (^?))
 import Control.Monad(Monad(return))
 import Data.Eq(Eq)
+import Data.Functor(Functor)
 import Data.Geo.Coordinate.DegreesLatitude(DegreesLatitude, AsDegreesLatitude(_DegreesLatitude))
 import Data.Geo.Coordinate.Minutes(AsMinutes(_Minutes), Minutes)
 import Data.Geo.Coordinate.Seconds(AsSeconds(_Seconds), Seconds)
 import Data.Ord(Ord((<)))
-import Prelude(Functor, Double, Show, Int, Num((+), (*), (-), abs), Fractional((/)), properFraction, fromIntegral)
+import Prelude(Double, Show, Int, Num((+), (*), (-), abs), Fractional((/)), properFraction, fromIntegral)
 
 -- $setup
 -- >>> import Prelude(Functor(..))
