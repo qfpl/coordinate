@@ -62,10 +62,10 @@ instance AsLongitude p f Longitude where
 -- >>> do deg <- (179 :: Int) ^? _DegreesLongitude; min <- (59 :: Int) ^? _Minutes; sec <- (60 :: Double) ^? _Seconds; (deg, min, sec) ^? _Longitude :: Maybe Longitude
 -- Nothing
 --
--- >>> fmap (\x -> _Longitude # x :: (DegreesLongitude, Minutes, Seconds))  (7 ^? fracLongitude :: Maybe Longitude)
+-- >>> fmap (\x -> _Longitude # x :: (DegreesLongitude, Minutes, Seconds))  ((7 :: Double) ^? _Longitude :: Maybe Longitude)
 -- Just (DegreesLongitude 7,Minutes 0,Seconds 0.0000)
 --
--- >>> fmap (\x -> _Longitude # x :: (DegreesLongitude, Minutes, Seconds))  (7.12 ^? fracLongitude :: Maybe Longitude)
+-- >>> fmap (\x -> _Longitude # x :: (DegreesLongitude, Minutes, Seconds))  ((7.12 :: Double) ^? _Longitude :: Maybe Longitude)
 -- Just (DegreesLongitude 7,Minutes 7,Seconds 12.0000)
 instance (Profunctor p, Functor f) => AsLongitude p f (DegreesLongitude, Minutes, Seconds) where
   _Longitude =
