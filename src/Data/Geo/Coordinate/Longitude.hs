@@ -6,7 +6,6 @@
 module Data.Geo.Coordinate.Longitude(
   Longitude
 , AsLongitude(..)
-, AsFracLongitude(..)
 ) where
 
 import Control.Applicative(Applicative)
@@ -113,65 +112,6 @@ instance (Profunctor p, Functor f) => AsLongitude p f (DegreesLongitude, Minutes
 -- Just 179.25166666666667
 instance (Choice p, Applicative f) => AsLongitude p f Double where
   _Longitude =
-    prism' (\(Longitude d m s) ->
-      let p = fromIntegral (_DegreesLongitude # d :: Int)
-          q = (fromIntegral (_Minutes # m :: Int) / 60) + (_Seconds # s) / 3600
-      in (if p < 0 then (-) else (+)) p q)
-      (\x -> let (d, z) = properFraction x
-                 (m, s) = properFraction ((z :: Double) * 60)
-             in do d' <- (d :: Int) ^? _DegreesLongitude
-                   m' <- (abs m :: Int) ^? _Minutes
-                   s' <- (abs s * 60) ^? _Seconds
-                   return (Longitude d' m' s'))
-
-
--- | A prism on longitude to a double between -180 and 180 exclusive.
-class AsFracLongitude t where
-  fracLongitude ::
-    Prism' Double t
-
--- | A prism on longitude to a double between -180 and 180 exclusive.
---
--- >>> 7 ^? fracLongitude :: Maybe Longitude
--- Just (Longitude (DegreesLongitude 7) (Minutes 0) (Seconds 0.0000))
---
--- >>> (-7) ^? fracLongitude :: Maybe Longitude
--- Just (Longitude (DegreesLongitude (-7)) (Minutes 0) (Seconds 0.0000))
---
--- >>> 7.12 ^? fracLongitude :: Maybe Longitude
--- Just (Longitude (DegreesLongitude 7) (Minutes 7) (Seconds 12.0000))
---
--- >>> (-7.12) ^? fracLongitude :: Maybe Longitude
--- Just (Longitude (DegreesLongitude (-7)) (Minutes 7) (Seconds 12.0000))
---
--- >>> fmap (fracLongitude #) (7.12 ^? fracLongitude :: Maybe Longitude)
--- Just 7.12
---
--- >>> fmap (fracLongitude #) ((-7.12) ^? fracLongitude :: Maybe Longitude)
--- Just (-7.12)
---
--- >>> 180 ^? fracLongitude :: Maybe Longitude
--- Nothing
---
--- >>> (-180) ^? fracLongitude :: Maybe Longitude
--- Nothing
---
--- >>> 15.63791 ^? fracLongitude :: Maybe Longitude
--- Just (Longitude (DegreesLongitude 15) (Minutes 38) (Seconds 16.4760))
---
--- >>> 179.1 ^? fracLongitude :: Maybe Longitude
--- Just (Longitude (DegreesLongitude 179) (Minutes 5) (Seconds 60.0000))
---
--- >>> 179.2 ^? fracLongitude :: Maybe Longitude
--- Just (Longitude (DegreesLongitude 179) (Minutes 11) (Seconds 60.0000))
---
--- >>> fmap (fracLongitude #) (do deg <- (7 :: Int) ^? _DegreesLongitude; min <- (7 :: Int) ^? _Minutes; sec <- (7 :: Double) ^? _Seconds; (deg, min, sec) ^? _Longitude :: Maybe Longitude)
--- Just 7.118611111111111
---
--- >>> fmap (fracLongitude #) (do deg <- (179 :: Int) ^? _DegreesLongitude; min <- (15 :: Int) ^? _Minutes; sec <- (6 :: Double) ^? _Seconds; (deg, min, sec) ^? _Longitude :: Maybe Longitude)
--- Just 179.25166666666667
-instance AsFracLongitude Longitude where
-  fracLongitude =
     prism' (\(Longitude d m s) ->
       let p = fromIntegral (_DegreesLongitude # d :: Int)
           q = (fromIntegral (_Minutes # m :: Int) / 60) + (_Seconds # s) / 3600
