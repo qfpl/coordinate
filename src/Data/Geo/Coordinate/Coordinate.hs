@@ -2,6 +2,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 
 module Data.Geo.Coordinate.Coordinate(
@@ -13,7 +14,7 @@ module Data.Geo.Coordinate.Coordinate(
 
 import Control.Applicative(Applicative)
 import Control.Category(Category(id, (.)))
-import Control.Lens(Choice, swapped, Profunctor, Optic', (^.), iso, lens, prism', swapped, (^?), (#))
+import Control.Lens(Identity, Const, Prism', Choice, swapped, Profunctor, Optic', (^.), iso, lens, prism', swapped, (^?), (#))
 import Control.Monad(Monad(return))
 import Data.Eq(Eq)
 import Data.Geo.Coordinate.Latitude(AsLatitude(_Latitude), Latitude)
@@ -23,7 +24,9 @@ import Data.Geo.Coordinate.DegreesLongitude(AsDegreesLongitude(_DegreesLongitude
 import Data.Geo.Coordinate.Minutes(Minutes)
 import Data.Geo.Coordinate.Seconds(Seconds)
 import Data.Maybe(Maybe)
+import Data.Monoid(First)
 import Data.Ord(Ord)
+import Data.Tagged(Tagged)
 import Data.Tuple(curry, uncurry)
 import Prelude(Double, Functor, Show, Double)
 
@@ -96,48 +99,49 @@ instance (Profunctor p, Functor f) => AsCoordinate p f ((DegreesLongitude, Minut
   _Coordinate =
     swapped . _Coordinate
 
+coordinatePrism' ::
+  (
+    AsLatitude Tagged Identity lat
+  , AsLatitude (->) (Const (First Latitude)) lat
+  , AsLongitude Tagged Identity lon
+  , AsLongitude (->) (Const (First Longitude)) lon) =>
+  Prism' (lat, lon) Coordinate
+coordinatePrism' =
+  coordinatePrism (_Latitude #) (_Longitude #) (^? _Latitude) (^? _Longitude)
+
+coordinatePrism ::
+  (Latitude -> lat)
+  -> (Longitude -> lon)
+  -> (lat -> Maybe Latitude)
+  -> (lon -> Maybe Longitude)
+  -> Prism' (lat, lon) Coordinate
+coordinatePrism f g h i =
+  prism'
+      (\(Coordinate lat lon) -> (f lat, g lon))
+      (\(lat, lon) ->
+        do lat' <- h lat
+           lon' <- i lon
+           return (Coordinate lat' lon'))
+
 instance (Choice p, Applicative f) => AsCoordinate p f (Double, Double) where
   _Coordinate =
-    prism'
-      (\(Coordinate lat lon) -> (_Latitude # lat, _Longitude # lon))
-      (\(lat, lon) ->
-        do lat' <- lat ^? _Latitude
-           lon' <- lon ^? _Longitude
-           return (Coordinate lat' lon'))
+    coordinatePrism'
 
 instance (Choice p, Applicative f) => AsCoordinate p f (Latitude, Double) where
   _Coordinate =
-    prism'
-      (\(Coordinate lat lon) -> (lat, _Longitude # lon))
-      (\(lat, lon) ->
-        do lon' <- lon ^? _Longitude
-           return (Coordinate lat lon'))
-
+    coordinatePrism id (_Longitude #) return (^? _Longitude)
+    
 instance (Choice p, Applicative f) => AsCoordinate p f (Double, Longitude) where
   _Coordinate =
-    prism'
-      (\(Coordinate lat lon) -> (_Latitude # lat, lon))
-      (\(lat, lon) ->
-        do lat' <- lat ^? _Latitude
-           return (Coordinate lat' lon))
+    coordinatePrism (_Latitude #) id (^? _Latitude) return
 
 instance (Choice p, Applicative f) => AsCoordinate p f ((DegreesLatitude, Minutes, Seconds), Double) where
   _Coordinate =
-    prism'
-      (\(Coordinate lat lon) -> (_Latitude # lat, _Longitude # lon))
-      (\(lat, lon) ->
-        do lat' <- lat ^? _Latitude
-           lon' <- lon ^? _Longitude
-           return (Coordinate lat' lon'))
+    coordinatePrism'
 
 instance (Choice p, Applicative f) => AsCoordinate p f (Double, (DegreesLongitude, Minutes, Seconds)) where
   _Coordinate =
-    prism'
-      (\(Coordinate lat lon) -> (_Latitude # lat, _Longitude # lon))
-      (\(lat, lon) ->
-        do lat' <- lat ^? _Latitude
-           lon' <- lon ^? _Longitude
-           return (Coordinate lat' lon'))
+    coordinatePrism'
 
 instance (p ~ (->), Functor f) => AsLatitude p f Coordinate where
   _Latitude =
