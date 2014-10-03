@@ -5,7 +5,7 @@
 module Data.Geo.Coordinate.DegreesLongitude(
   DegreesLongitude
 , AsDegreesLongitude(..)
-, modDegreesLongitude
+, remDegreesLongitude
 ) where
 
 import Control.Applicative(Applicative)
@@ -13,11 +13,10 @@ import Control.Category(Category(id))
 import Control.Lens(Optic', Choice, prism')
 import Data.Bool((&&))
 import Data.Eq(Eq)
-import Data.Fixed(mod')
 import Data.Int(Int)
 import Data.Maybe(Maybe(Just, Nothing))
 import Data.Ord(Ord((<), (>)))
-import Prelude(Show)
+import Prelude(Show, rem)
 
 -- $setup
 -- >>> import Control.Lens((#), (^?))
@@ -65,24 +64,24 @@ instance (Choice p, Applicative f) => AsDegreesLongitude p f Int where
                then Just (DegreesLongitude i)
                else Nothing)
 
--- | Setting a value `>= 180` will get that value `(`mod` 180)`.
+-- | Setting a value `>= 180` will get that value `(`rem` 180)`.
 --
--- >>> modDegreesLongitude 7
+-- >>> remDegreesLongitude 7
 -- DegreesLongitude 7
 --
--- >>> modDegreesLongitude 0
+-- >>> remDegreesLongitude 0
 -- DegreesLongitude 0
 --
--- >>> modDegreesLongitude 180
+-- >>> remDegreesLongitude 180
 -- DegreesLongitude 0
 --
--- >>> modDegreesLongitude 1
+-- >>> remDegreesLongitude 1
 -- DegreesLongitude 1
 --
--- >>> modDegreesLongitude 179
+-- >>> remDegreesLongitude 179
 -- DegreesLongitude 179 
-modDegreesLongitude ::
+remDegreesLongitude ::
   Int
   -> DegreesLongitude
-modDegreesLongitude x =
-  DegreesLongitude (x `mod'` 180)
+remDegreesLongitude x =
+  DegreesLongitude (x `rem` 180)

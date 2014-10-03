@@ -5,7 +5,7 @@
 module Data.Geo.Coordinate.Seconds(
   Seconds
 , AsSeconds(..)
-, modSeconds
+, remSeconds
 ) where
 
 import Control.Applicative(Applicative)
@@ -13,10 +13,12 @@ import Control.Category(Category(id))
 import Control.Lens(prism', Optic', Choice)
 import Data.Bool((&&))
 import Data.Eq(Eq)
-import Data.Fixed(mod')
+import Data.Int(Int)
+import Data.Fixed(divMod')
 import Data.Ord(Ord((>), (>=), (<)))
 import Data.Maybe(Maybe(Just, Nothing))
 import Data.List((++))
+import Data.Tuple(snd)
 import Prelude(Double, Show(showsPrec), showParen, showString)
 import Text.Printf(printf)
 
@@ -69,27 +71,27 @@ instance (Choice p, Applicative f) => AsSeconds p f Double where
                then Just (Seconds d)
                else Nothing)
 
--- | Setting a value `>= 60` will get that value `(`mod` 60)`.
+-- | Setting a value `>= 60` will get that value `(`rem` 60)`.
 --
--- >>> modSeconds 7
+-- >>> remSeconds 7
 -- Seconds 7.0000
 --
--- >>> modSeconds 0
+-- >>> remSeconds 0
 -- Seconds 0.0000
 --
--- >>> modSeconds (-0.0001)
+-- >>> remSeconds (-0.0001)
 -- Seconds 59.9999
 --
--- >>> modSeconds 60
+-- >>> remSeconds 60
 -- Seconds 0.0000
 --
--- >>> modSeconds 59.99999
+-- >>> remSeconds 59.99999
 -- Seconds 60.0000
 --
--- >>> modSeconds 59.999
+-- >>> remSeconds 59.999
 -- Seconds 59.9990
-modSeconds ::
+remSeconds ::
   Double
   -> Seconds
-modSeconds x =
-  Seconds (x `mod'` 60)
+remSeconds x =
+  Seconds (snd (x `divMod'` 60.0 :: (Int, Double)))

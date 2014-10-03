@@ -5,7 +5,7 @@
 module Data.Geo.Coordinate.Minutes(
   Minutes
 , AsMinutes(..)
-, modMinutes
+, remMinutes
 ) where
 
 import Control.Applicative(Applicative)
@@ -15,9 +15,8 @@ import Data.Bool((&&))
 import Data.Maybe(Maybe(Just, Nothing))
 import Data.Eq(Eq)
 import Data.Int(Int)
-import Data.Fixed(mod')
 import Data.Ord(Ord((>=), (<)))
-import Prelude(Show)
+import Prelude(Show, rem)
 
 -- $setup
 -- >>> import Control.Lens((#), (^?), (^.))
@@ -59,24 +58,24 @@ instance (Choice p, Applicative f) => AsMinutes p f Int where
                then Just (Minutes i)
                else Nothing)       
 
--- | Setting a value `>= 60` will get that value `(`mod` 60)`.
+-- | Setting a value `>= 60` will get that value `(`rem` 60)`.
 --
--- >>> modMinutes 7
+-- >>> remMinutes 7
 -- Minutes 7
 --
--- >>> modMinutes 0
+-- >>> remMinutes 0
 -- Minutes 0
 --
--- >>> modMinutes 60
+-- >>> remMinutes 60
 -- Minutes 0
 --
--- >>> modMinutes 1
+-- >>> remMinutes 1
 -- Minutes 1
 --
--- >>> modMinutes 59
+-- >>> remMinutes 59
 -- Minutes 59 
-modMinutes ::
+remMinutes ::
   Int
   -> Minutes
-modMinutes x =
-  Minutes (x `mod'` 60)
+remMinutes x =
+  Minutes (x `rem` 60)
