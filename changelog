@@ -1,3 +1,7 @@
+0.0.15
+
+* Change mod functions to use rem.
+
 0.0.14
 
 * Add mod functions for `DegreesLatitude` and `DegreesLongitude`.
