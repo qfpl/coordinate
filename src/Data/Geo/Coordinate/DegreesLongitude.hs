@@ -5,6 +5,7 @@
 module Data.Geo.Coordinate.DegreesLongitude(
   DegreesLongitude
 , AsDegreesLongitude(..)
+, modDegreesLongitude
 ) where
 
 import Control.Applicative(Applicative)
@@ -12,6 +13,7 @@ import Control.Category(Category(id))
 import Control.Lens(Optic', Choice, prism')
 import Data.Bool((&&))
 import Data.Eq(Eq)
+import Data.Fixed(mod')
 import Data.Int(Int)
 import Data.Maybe(Maybe(Just, Nothing))
 import Data.Ord(Ord((<), (>)))
@@ -62,3 +64,25 @@ instance (Choice p, Applicative f) => AsDegreesLongitude p f Int where
       (\i -> if i > -180 && i < 180
                then Just (DegreesLongitude i)
                else Nothing)
+
+-- | Setting a value `>= 90` will get that value `(`mod` 180)`.
+--
+-- >>> modDegreesLongitude 7
+-- DegreesLongitude 7
+--
+-- >>> modDegreesLongitude 0
+-- DegreesLongitude 0
+--
+-- >>> modDegreesLongitude 180
+-- DegreesLongitude 0
+--
+-- >>> modDegreesLongitude 1
+-- DegreesLongitude 1
+--
+-- >>> modDegreesLongitude 179
+-- DegreesLongitude 179 
+modDegreesLongitude ::
+  Int
+  -> DegreesLongitude
+modDegreesLongitude x =
+  DegreesLongitude (x `mod'` 180)
