@@ -1,22 +1,25 @@
 name:               coordinate
-version:            0.0.15
+version:            0.0.16
 license:            BSD3
 license-file:       LICENCE
 author:             Tony Morris <ʇǝu˙sıɹɹoɯʇ@ןןǝʞsɐɥ>
 maintainer:         Tony Morris
-copyright:          Copyright (C) 2013-2014 Tony Morris
+copyright:          Copyright (C) 2013-2014 NICTA Pty Ltd
 synopsis:           A representation of latitude and longitude
 category:           Development
-description:        A representation of latitude and longitude
-homepage:           https://github.com/tonymorris/coordinate
-bug-reports:        https://github.com/tonymorris/coordinate/issues
+description:       
+  <<http://i.imgur.com/Ns5hntl.jpg>>
+  .
+  A representation of latitude and longitude
+homepage:           https://github.com/NICTA/coordinate
+bug-reports:        https://github.com/NICTA/coordinate/issues
 cabal-version:      >= 1.10
 build-type:         Custom
 extra-source-files: changelog
 
 source-repository   head
   type:             git
-  location:         git@github.com:tonymorris/coordinate.git
+  location:         git@github.com:NICTA/coordinate.git
 
 flag                small_base
   description:      Choose the new, split-up base package.
