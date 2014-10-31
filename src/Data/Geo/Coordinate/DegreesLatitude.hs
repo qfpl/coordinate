@@ -64,7 +64,7 @@ instance (Choice p, Applicative f) => AsDegreesLatitude p f Int where
                then Just (DegreesLatitude i)
                else Nothing)
 
--- | Setting a value `>= 90` will get that value `(`rem` 90)`.
+-- | Setting a value @>= 90@ will get that value @(`rem` 90)@.
 --
 -- >>> remDegreesLatitude 7
 -- DegreesLatitude 7

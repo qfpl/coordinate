@@ -64,7 +64,7 @@ instance (Choice p, Applicative f) => AsDegreesLongitude p f Int where
                then Just (DegreesLongitude i)
                else Nothing)
 
--- | Setting a value `>= 180` will get that value `(`rem` 180)`.
+-- | Setting a value @>= 180@ will get that value @(`rem` 180)@.
 --
 -- >>> remDegreesLongitude 7
 -- DegreesLongitude 7

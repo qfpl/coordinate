@@ -58,7 +58,7 @@ instance (Choice p, Applicative f) => AsMinutes p f Int where
                then Just (Minutes i)
                else Nothing)       
 
--- | Setting a value `>= 60` will get that value `(`rem` 60)`.
+-- | Setting a value @>= 60@ will get that value @(`rem` 60)@.
 --
 -- >>> remMinutes 7
 -- Minutes 7

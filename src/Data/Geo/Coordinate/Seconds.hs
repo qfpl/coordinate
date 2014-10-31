@@ -71,7 +71,7 @@ instance (Choice p, Applicative f) => AsSeconds p f Double where
                then Just (Seconds d)
                else Nothing)
 
--- | Setting a value `>= 60` will get that value `(`rem` 60)`.
+-- | Setting a value @>= 60@ will get that value @(`rem` 60)@.
 --
 -- >>> remSeconds 7
 -- Seconds 7.0000
