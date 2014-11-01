@@ -1,0 +1,6 @@
+<edwardk> you can also tweak coordinatePrism to take one pair of constraints easily, by Store or Context as what you decode with
+<edwardk> coordinatePrism' :: (AsLatitude (->) Store lat, AsLongitude (->) Store lon) => Prism' (lat, lon) Coordinate
+<edwardk> er, (Store lat) and (Store lon)
+<edwardk> (or Context lat lat / Context lon lon
+<edwardk> also theoretically AsCoordinate p f t should subtype AsLatitude p f t and AsLongitude p f t           -- class (AsLatitude p f t, AsLongitude p f t) => AsCoordinate p f t where ...
+
