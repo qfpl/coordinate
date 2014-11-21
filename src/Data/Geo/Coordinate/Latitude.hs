@@ -9,7 +9,7 @@ module Data.Geo.Coordinate.Latitude(
 ) where
 
 import Control.Applicative(Applicative)
-import Control.Category(Category(id))
+import Control.Category(Category(id, (.)))
 import Control.Lens(Choice, Profunctor, Optic', iso, prism', lens, (#), (^?))
 import Control.Monad(Monad(return))
 import Data.Eq(Eq)
@@ -18,6 +18,7 @@ import Data.Geo.Coordinate.DegreesLatitude(DegreesLatitude, AsDegreesLatitude(_D
 import Data.Geo.Coordinate.Minutes(AsMinutes(_Minutes), Minutes)
 import Data.Geo.Coordinate.Seconds(AsSeconds(_Seconds), Seconds)
 import Data.Ord(Ord((<)))
+import Data.Radian(Radian, radians)
 import Prelude(Double, Show, Int, Num((+), (*), (-), abs), Fractional((/)), properFraction, fromIntegral)
 
 -- $setup
@@ -123,6 +124,35 @@ instance (Choice p, Applicative f) => AsLatitude p f Double where
                  m' <- (abs m :: Int) ^? _Minutes
                  s' <- (abs s * 60) ^? _Seconds
                  return (Latitude d' m' s'))
+
+-- | A prism on latitude to a double between -π2 and π2 exclusive. 
+--
+-- >>> (0.2 :: Radian Double) ^? _Latitude
+-- Just (Latitude (DegreesLatitude 11) (Minutes 27) (Seconds 32.9612))
+--
+-- >>> (1.3 :: Radian Double) ^? _Latitude
+-- Just (Latitude (DegreesLatitude 74) (Minutes 29) (Seconds 4.2481))
+--
+-- >>> (-1.3 :: Radian Double) ^? _Latitude
+-- Just (Latitude (DegreesLatitude (-74)) (Minutes 29) (Seconds 4.2481))
+--
+-- >>> (1.5707963 :: Radian Double) ^? _Latitude
+-- Just (Latitude (DegreesLatitude 89) (Minutes 59) (Seconds 59.9945))
+--
+-- >>> (1.58 :: Radian Double) ^? _Latitude
+-- Nothing
+--
+-- >>> (-1.58 :: Radian Double) ^? _Latitude
+-- Nothing
+--
+-- >>> fmap (\x -> _Latitude # x  :: Radian Double) (do deg <- (7 :: Int) ^? _DegreesLatitude; min <- (7 :: Int) ^? _Minutes; sec <- (7 :: Double) ^? _Seconds; (deg, min, sec) ^? _Latitude :: Maybe Latitude)
+-- Just (Radian 0.12424320205794079)
+--
+-- >>> fmap (\x -> _Latitude # x  :: Radian Double) (do deg <- (89 :: Int) ^? _DegreesLatitude; min <- (15 :: Int) ^? _Minutes; sec <- (6 :: Double) ^? _Seconds; (deg, min, sec) ^? _Latitude :: Maybe Latitude)
+-- Just (Radian 1.5577354462258055)
+instance (Choice p, Applicative f) => AsLatitude p f (Radian Double) where
+  _Latitude =
+    radians . _Latitude
 
 instance (p ~ (->), Functor f) => AsDegreesLatitude p f Latitude where
   _DegreesLatitude =
