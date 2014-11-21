@@ -1,3 +1,7 @@
+0.0.17
+
+* Include prisms for radians. Requires a dependency on the `radian` package.
+
 0.0.16
 
 * Some minor fixes to the documentation.
