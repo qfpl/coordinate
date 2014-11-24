@@ -1,3 +1,7 @@
+0.0.18
+
+* Update dependency on `radian`.
+
 0.0.17
 
 * Include prisms for radians. Requires a dependency on the `radian` package.
