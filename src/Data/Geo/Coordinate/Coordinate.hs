@@ -8,13 +8,17 @@
 module Data.Geo.Coordinate.Coordinate(
   Coordinate
 , AsCoordinate(..)
+, latitudeMinutes
+, latitudeSeconds
+, longitudeMinutes
+, longitudeSeconds
 , (.#.)
 , (<°>)
 ) where
 
 import Control.Applicative(Applicative)
 import Control.Category(Category(id, (.)))
-import Control.Lens(Identity, Const, Prism', Choice, swapped, Profunctor, Optic', (^.), iso, lens, prism', swapped, (^?), (#))
+import Control.Lens(Identity, Const, Prism', Lens', Choice, swapped, Profunctor, Optic', (^.), iso, lens, prism', swapped, (^?), (#))
 import Control.Monad(Monad(return))
 import Data.Eq(Eq)
 import Data.Functor(Functor)
@@ -22,8 +26,8 @@ import Data.Geo.Coordinate.Latitude(AsLatitude(_Latitude), Latitude)
 import Data.Geo.Coordinate.Longitude(AsLongitude(_Longitude), Longitude)
 import Data.Geo.Coordinate.DegreesLatitude(AsDegreesLatitude(_DegreesLatitude), DegreesLatitude)
 import Data.Geo.Coordinate.DegreesLongitude(AsDegreesLongitude(_DegreesLongitude), DegreesLongitude)
-import Data.Geo.Coordinate.Minutes(Minutes)
-import Data.Geo.Coordinate.Seconds(Seconds)
+import Data.Geo.Coordinate.Minutes(Minutes, AsMinutes(_Minutes))
+import Data.Geo.Coordinate.Seconds(Seconds, AsSeconds(_Seconds))
 import Data.Maybe(Maybe)
 import Data.Monoid(First)
 import Data.Ord(Ord)
@@ -159,3 +163,31 @@ instance (p ~ (->), Functor f) => AsLongitude p f Coordinate where
 instance (p ~ (->), Functor f) => AsDegreesLongitude p f Coordinate where
   _DegreesLongitude =
     _Longitude . _DegreesLongitude
+
+latitudeMinutes ::
+  Lens'
+    Coordinate
+    Minutes
+latitudeMinutes =
+  _Latitude . _Minutes
+
+latitudeSeconds ::
+  Lens'
+    Coordinate
+    Seconds
+latitudeSeconds =
+  _Latitude . _Seconds
+
+longitudeMinutes ::
+  Lens'
+    Coordinate
+    Minutes
+longitudeMinutes =
+  _Longitude . _Minutes
+
+longitudeSeconds ::
+  Lens'
+    Coordinate
+    Seconds
+longitudeSeconds =
+  _Longitude . _Seconds
