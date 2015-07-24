@@ -1,3 +1,7 @@
+0.0.19
+
+* Add lenses to latitude/longitude minutes/seconds
+
 0.0.18
 
 * Update dependency on `radian`.
