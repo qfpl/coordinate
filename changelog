@@ -1,6 +1,8 @@
 0.0.19
 
-* Add lenses to latitude/longitude minutes/seconds
+* Add lenses from latitude, longitude minutes, seconds.
+* Add traversals from coordinate to minutes, seconds.
+* Generalise coordinate operators.
 
 0.0.18
 
