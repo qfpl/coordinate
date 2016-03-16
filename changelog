@@ -1,3 +1,7 @@
+0.0.20
+
+* fix modulo arithmetic for latitude and longitude.
+
 0.0.19
 
 * Add lenses from latitude, longitude minutes, seconds.
