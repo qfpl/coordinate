@@ -6,17 +6,18 @@ module Data.Geo.Coordinate.DegreesLongitude(
   DegreesLongitude
 , AsDegreesLongitude(..)
 , modDegreesLongitude
+, antipodeDegreesLongitude
 ) where
 
 import Control.Applicative(Applicative)
 import Control.Category(Category(id))
-import Control.Lens(Optic', Choice, prism')
+import Control.Lens(Optic', Choice, prism', Iso', iso)
 import Data.Bool((&&))
 import Data.Eq(Eq((==)))
 import Data.Int(Int)
 import Data.Maybe(Maybe(Just, Nothing))
 import Data.Ord(Ord((<), (>)))
-import Prelude(Show, mod, Num((+), (-)))
+import Prelude(Show, mod, Num(negate, (+), (-)))
 
 -- $setup
 -- >>> import Control.Lens((#), (^?))
@@ -64,7 +65,7 @@ instance (Choice p, Applicative f) => AsDegreesLongitude p f Int where
                then Just (DegreesLongitude i)
                else Nothing)
 
--- | Setting a value @>= 180@ will get that value @(`rem` 180)@.
+-- | Setting a value within the range @-180@ and @180@ using modulo arithmetic.
 --
 -- >>> modDegreesLongitude 7
 -- DegreesLongitude 7
@@ -100,3 +101,26 @@ modDegreesLongitude ::
   -> DegreesLongitude
 modDegreesLongitude x =
   DegreesLongitude (if x == 180 then 180 else mod (x + 180) 360 - 180)
+
+-- | The degrees longitude that is symmetrical around the prime meridian.
+--
+-- >>> antipodeDegreesLongitude # modDegreesLongitude 30
+-- DegreesLongitude (-30)
+--
+-- >>> antipodeDegreesLongitude # modDegreesLongitude 100
+-- DegreesLongitude (-100)
+--
+-- >>> antipodeDegreesLongitude # modDegreesLongitude 190
+-- DegreesLongitude 170
+--
+-- >>> antipodeDegreesLongitude # modDegreesLongitude 0
+-- DegreesLongitude 0
+antipodeDegreesLongitude ::
+  Iso'
+    DegreesLongitude
+    DegreesLongitude
+antipodeDegreesLongitude =
+  let n (DegreesLongitude x) = DegreesLongitude (negate x)
+  in  iso
+        n
+        n

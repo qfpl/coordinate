@@ -6,17 +6,20 @@
 module Data.Geo.Coordinate.Latitude(
   Latitude
 , AsLatitude(..)
+, modLatitude
+, antipodeLatitude
 ) where
 
 import Control.Applicative(Applicative)
 import Control.Category(Category(id))
-import Control.Lens(Choice, Profunctor, Optic', iso, prism', lens, (#), (^?))
+import Control.Lens(Choice, Profunctor, Optic', Iso', iso, prism', lens, (#), (^?))
 import Control.Monad(Monad(return))
 import Data.Eq(Eq)
+import Data.Fixed(divMod')
 import Data.Functor(Functor)
-import Data.Geo.Coordinate.DegreesLatitude(DegreesLatitude, AsDegreesLatitude(_DegreesLatitude))
-import Data.Geo.Coordinate.Minutes(AsMinutes(_Minutes), Minutes)
-import Data.Geo.Coordinate.Seconds(AsSeconds(_Seconds), Seconds)
+import Data.Geo.Coordinate.DegreesLatitude(DegreesLatitude, AsDegreesLatitude(_DegreesLatitude), modDegreesLatitude, antipodeDegreesLatitude)
+import Data.Geo.Coordinate.Minutes(AsMinutes(_Minutes), Minutes, modMinutes)
+import Data.Geo.Coordinate.Seconds(AsSeconds(_Seconds), Seconds, modSeconds)
 import Data.Ord(Ord((<)))
 import Prelude(Double, Show, Int, Num((+), (*), (-), abs), Fractional((/)), properFraction, fromIntegral)
 
@@ -135,3 +138,76 @@ instance (p ~ (->), Functor f) => AsMinutes p f Latitude where
 instance (p ~ (->), Functor f) => AsSeconds p f Latitude where
   _Seconds =
     lens (\(Latitude _ _ s) -> s) (\(Latitude d m _) s -> Latitude d m s)
+
+-- | Setting a latitude using modulo arithmetic.
+--
+-- >>> modLatitude 20 20 20
+-- Latitude (DegreesLatitude 20) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLatitude 20 20 (-20)
+-- Latitude (DegreesLatitude 20) (Minutes 19) (Seconds 40.0000)
+--
+-- >>> modLatitude 20 20 80
+-- Latitude (DegreesLatitude 20) (Minutes 21) (Seconds 20.0000)
+--
+-- >>> modLatitude 20 80 20
+-- Latitude (DegreesLatitude 21) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLatitude 20 80 80
+-- Latitude (DegreesLatitude 21) (Minutes 21) (Seconds 20.0000)
+--
+-- >>> modLatitude 20 80 (-20)
+-- Latitude (DegreesLatitude 21) (Minutes 19) (Seconds 40.0000)
+--
+-- >>> modLatitude 110 20 20
+-- Latitude (DegreesLatitude (-70)) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLatitude 110 20 80
+-- Latitude (DegreesLatitude (-70)) (Minutes 21) (Seconds 20.0000)
+--
+-- >>> modLatitude 110 80 20
+-- Latitude (DegreesLatitude (-69)) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLatitude 110 20 (-20)
+-- Latitude (DegreesLatitude (-70)) (Minutes 19) (Seconds 40.0000)
+--
+-- >>> modLatitude 110 (-20) (-20)
+-- Latitude (DegreesLatitude (-71)) (Minutes 39) (Seconds 40.0000)
+--
+-- >>> modLatitude 110 (-80) (-20)
+-- Latitude (DegreesLatitude (-72)) (Minutes 39) (Seconds 40.0000)
+--
+-- >>> modLatitude 20 20 3620
+-- Latitude (DegreesLatitude 21) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLatitude 20 20 (-3580)
+-- Latitude (DegreesLatitude 19) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLatitude 110 20 3620
+-- Latitude (DegreesLatitude (-69)) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLatitude 110 20 (-3580)
+-- Latitude (DegreesLatitude (-71)) (Minutes 20) (Seconds 20.0000)
+modLatitude ::
+  Int
+  -> Int
+  -> Double
+  -> Latitude
+modLatitude d m s =
+  let (ts, rs) = s `divMod'` 60
+      (tm, rm) = (ts + m) `divMod'` 60
+  in Latitude (modDegreesLatitude (tm + d)) (modMinutes rm) (modSeconds rs)
+
+-- | The latitude that is symmetrical around the equator.
+--
+-- >>> fmap (\x -> antipodeLatitude # x) (do d <- (7 :: Int) ^? _DegreesLatitude; m <- (7 :: Int) ^? _Minutes; s <- (7 :: Double) ^? _Seconds; (d, m, s) ^? _Latitude :: Maybe Latitude)
+-- Just (Latitude (DegreesLatitude (-7)) (Minutes 7) (Seconds 7.0000))
+antipodeLatitude ::
+  Iso'
+    Latitude
+    Latitude
+antipodeLatitude =
+  let n (Latitude d m s) = Latitude (antipodeDegreesLatitude # d) m s
+  in  iso
+        n
+        n

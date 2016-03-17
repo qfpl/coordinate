@@ -1,3 +1,8 @@
+0.0.21
+
+* fix modulo arithmetic for minutes, seconds.
+* antipode functions.
+
 0.0.20
 
 * fix modulo arithmetic for latitude and longitude.

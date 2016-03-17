@@ -14,16 +14,17 @@ module Data.Geo.Coordinate.Coordinate(
 , longitudeSeconds
 , (.#.)
 , (<°>)
+, antipode
 ) where
 
 import Control.Applicative(Applicative((<*>)))
 import Control.Category(Category(id, (.)))
-import Control.Lens(Identity, Const, Prism', Choice, swapped, Profunctor, Optic', (^.), iso, from, lens, prism', swapped, (^?), (#))
+import Control.Lens(Identity, Const, Prism', Choice, Iso', swapped, Profunctor, Optic', (^.), iso, from, lens, prism', swapped, (^?), (#))
 import Control.Monad(Monad(return))
 import Data.Eq(Eq)
 import Data.Functor(Functor, (<$>))
-import Data.Geo.Coordinate.Latitude(AsLatitude(_Latitude), Latitude)
-import Data.Geo.Coordinate.Longitude(AsLongitude(_Longitude), Longitude)
+import Data.Geo.Coordinate.Latitude(AsLatitude(_Latitude), Latitude, antipodeLatitude)
+import Data.Geo.Coordinate.Longitude(AsLongitude(_Longitude), Longitude, antipodeLongitude)
 import Data.Geo.Coordinate.DegreesLatitude(AsDegreesLatitude(_DegreesLatitude), DegreesLatitude)
 import Data.Geo.Coordinate.DegreesLongitude(AsDegreesLongitude(_DegreesLongitude), DegreesLongitude)
 import Data.Geo.Coordinate.Minutes(Minutes, AsMinutes(_Minutes))
@@ -211,3 +212,13 @@ longitudeSeconds ::
   Optic' (->) f coord Seconds
 longitudeSeconds =
   _Coordinate . _Longitude . _Seconds
+
+antipode ::
+  Iso'
+    Coordinate
+    Coordinate
+antipode =
+  let n (Coordinate lat lon) = Coordinate (antipodeLatitude # lat) (antipodeLongitude # lon)
+  in  iso
+        n
+        n

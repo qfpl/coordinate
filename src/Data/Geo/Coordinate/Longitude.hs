@@ -6,17 +6,20 @@
 module Data.Geo.Coordinate.Longitude(
   Longitude
 , AsLongitude(..)
+, modLongitude
+, antipodeLongitude
 ) where
 
 import Control.Applicative(Applicative)
 import Control.Category(Category(id))
-import Control.Lens(Choice, Profunctor, Optic', iso, prism', lens, (#), (^?))
+import Control.Lens(Choice, Profunctor, Optic', Iso', iso, prism', lens, (#), (^?))
 import Control.Monad(Monad(return))
 import Data.Eq(Eq)
+import Data.Fixed(divMod')
 import Data.Functor(Functor)
-import Data.Geo.Coordinate.DegreesLongitude(DegreesLongitude, AsDegreesLongitude(_DegreesLongitude))
-import Data.Geo.Coordinate.Minutes(AsMinutes(_Minutes), Minutes)
-import Data.Geo.Coordinate.Seconds(AsSeconds(_Seconds), Seconds)
+import Data.Geo.Coordinate.DegreesLongitude(DegreesLongitude, AsDegreesLongitude(_DegreesLongitude), modDegreesLongitude, antipodeDegreesLongitude)
+import Data.Geo.Coordinate.Minutes(AsMinutes(_Minutes), Minutes, modMinutes)
+import Data.Geo.Coordinate.Seconds(AsSeconds(_Seconds), Seconds, modSeconds)
 import Data.Ord(Ord((<)))
 import Prelude(Double, Show, Int, Num((+), (*), (-), abs), Fractional((/)), properFraction, fromIntegral)
 
@@ -135,3 +138,76 @@ instance (p ~ (->), Functor f) => AsMinutes p f Longitude where
 instance (p ~ (->), Functor f) => AsSeconds p f Longitude where
   _Seconds =
     lens (\(Longitude _ _ s) -> s) (\(Longitude d m _) s -> Longitude d m s)
+
+-- | Setting a longitude using modulo arithmetic.
+--
+-- >>> modLongitude 20 20 20
+-- Longitude (DegreesLongitude 20) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLongitude 20 20 (-20)
+-- Longitude (DegreesLongitude 20) (Minutes 19) (Seconds 40.0000)
+--
+-- >>> modLongitude 20 20 80
+-- Longitude (DegreesLongitude 20) (Minutes 21) (Seconds 20.0000)
+--
+-- >>> modLongitude 20 80 20
+-- Longitude (DegreesLongitude 21) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLongitude 20 80 80
+-- Longitude (DegreesLongitude 21) (Minutes 21) (Seconds 20.0000)
+--
+-- >>> modLongitude 20 80 (-20)
+-- Longitude (DegreesLongitude 21) (Minutes 19) (Seconds 40.0000)
+--
+-- >>> modLongitude 200 20 20
+-- Longitude (DegreesLongitude (-160)) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLongitude 200 20 80
+-- Longitude (DegreesLongitude (-160)) (Minutes 21) (Seconds 20.0000)
+--
+-- >>> modLongitude 200 80 20
+-- Longitude (DegreesLongitude (-159)) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLongitude 200 20 (-20)
+-- Longitude (DegreesLongitude (-160)) (Minutes 19) (Seconds 40.0000)
+--
+-- >>> modLongitude 200 (-20) (-20)
+-- Longitude (DegreesLongitude (-161)) (Minutes 39) (Seconds 40.0000)
+--
+-- >>> modLongitude 200 (-80) (-20)
+-- Longitude (DegreesLongitude (-162)) (Minutes 39) (Seconds 40.0000)
+--
+-- >>> modLongitude 20 20 3620
+-- Longitude (DegreesLongitude 21) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLongitude 20 20 (-3580)
+-- Longitude (DegreesLongitude 19) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLongitude 200 20 3620
+-- Longitude (DegreesLongitude (-159)) (Minutes 20) (Seconds 20.0000)
+--
+-- >>> modLongitude 200 20 (-3580)
+-- Longitude (DegreesLongitude (-161)) (Minutes 20) (Seconds 20.0000)
+modLongitude ::
+  Int
+  -> Int
+  -> Double
+  -> Longitude
+modLongitude d m s =
+  let (ts, rs) = s `divMod'` 60
+      (tm, rm) = (ts + m) `divMod'` 60
+  in Longitude (modDegreesLongitude (tm + d)) (modMinutes rm) (modSeconds rs)
+
+-- | The longitude that is symmetrical around the prime meridian.
+--
+-- >>> fmap (\x -> antipodeLongitude # x) (do d <- (7 :: Int) ^? _DegreesLongitude; m <- (7 :: Int) ^? _Minutes; s <- (7 :: Double) ^? _Seconds; (d, m, s) ^? _Longitude :: Maybe Longitude)
+-- Just (Longitude (DegreesLongitude (-7)) (Minutes 7) (Seconds 7.0000))
+antipodeLongitude ::
+  Iso'
+    Longitude
+    Longitude
+antipodeLongitude =
+  let n (Longitude d m s) = Longitude (antipodeDegreesLongitude # d) m s
+  in  iso
+        n
+        n

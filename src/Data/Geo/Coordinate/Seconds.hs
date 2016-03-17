@@ -5,7 +5,7 @@
 module Data.Geo.Coordinate.Seconds(
   Seconds
 , AsSeconds(..)
-, remSeconds
+, modSeconds
 ) where
 
 import Control.Applicative(Applicative)
@@ -71,27 +71,33 @@ instance (Choice p, Applicative f) => AsSeconds p f Double where
                then Just (Seconds d)
                else Nothing)
 
--- | Setting a value @>= 60@ will get that value @(`rem` 60)@.
+-- | Setting a value within the range @0@ and @60@ using modulo arithmetic.
 --
--- >>> remSeconds 7
+-- >>> modSeconds 7
 -- Seconds 7.0000
 --
--- >>> remSeconds 0
+-- >>> modSeconds 0
 -- Seconds 0.0000
 --
--- >>> remSeconds (-0.0001)
+-- >>> modSeconds (-0.0001)
 -- Seconds 59.9999
 --
--- >>> remSeconds 60
+-- >>> modSeconds 60
 -- Seconds 0.0000
 --
--- >>> remSeconds 59.99999
+-- >>> modSeconds 59.99999
 -- Seconds 60.0000
 --
--- >>> remSeconds 59.999
+-- >>> modSeconds 59.999
 -- Seconds 59.9990
-remSeconds ::
+--
+-- >>> modSeconds 61
+-- Seconds 1.0000
+--
+-- >>> modSeconds (-1)
+-- Seconds 59.0000
+modSeconds ::
   Double
   -> Seconds
-remSeconds x =
+modSeconds x =
   Seconds (snd (x `divMod'` 60.0 :: (Int, Double)))

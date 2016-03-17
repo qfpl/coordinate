@@ -6,17 +6,18 @@ module Data.Geo.Coordinate.DegreesLatitude(
   DegreesLatitude
 , AsDegreesLatitude(..)
 , modDegreesLatitude
+, antipodeDegreesLatitude
 ) where
 
 import Control.Applicative(Applicative)
 import Control.Category(Category(id))
-import Control.Lens(Optic', Choice, prism')
+import Control.Lens(Optic', Choice, prism', Iso', iso)
 import Data.Bool((&&))
 import Data.Eq(Eq((==)))
 import Data.Int(Int)
 import Data.Maybe(Maybe(Just, Nothing))
 import Data.Ord(Ord((<), (>)))
-import Prelude(Show, mod, Num((+), (-)))
+import Prelude(Show, mod, Num(negate, (+), (-)))
 
 -- $setup
 -- >>> import Control.Lens((#), (^?))
@@ -64,7 +65,7 @@ instance (Choice p, Applicative f) => AsDegreesLatitude p f Int where
                then Just (DegreesLatitude i)
                else Nothing)
 
--- | Setting a value @>= 90@ will get that value @(`rem` 90)@.
+-- | Setting a value within the range @-90@ and @90@ using modulo arithmetic.
 --
 -- >>> modDegreesLatitude 7
 -- DegreesLatitude 7
@@ -100,3 +101,26 @@ modDegreesLatitude ::
   -> DegreesLatitude
 modDegreesLatitude x =
   DegreesLatitude (if x == 90 then 90 else mod (x + 90) 180 - 90)
+
+-- | The degrees latitude that is symmetrical around the equator.
+--
+-- >>> antipodeDegreesLatitude # modDegreesLatitude 30
+-- DegreesLatitude (-30)
+--
+-- >>> antipodeDegreesLatitude # modDegreesLatitude 80
+-- DegreesLatitude (-80)
+--
+-- >>> antipodeDegreesLatitude # modDegreesLatitude 110
+-- DegreesLatitude 70
+--
+-- >>> antipodeDegreesLatitude # modDegreesLatitude 0
+-- DegreesLatitude 0
+antipodeDegreesLatitude ::
+  Iso'
+    DegreesLatitude
+    DegreesLatitude
+antipodeDegreesLatitude =
+  let n (DegreesLatitude x) = DegreesLatitude (negate x)
+  in  iso
+        n
+        n
