@@ -15,7 +15,7 @@ import Data.Bool((&&))
 import Data.Eq(Eq)
 import Data.Int(Int)
 import Data.Fixed(divMod')
-import Data.Ord(Ord((>), (>=), (<)))
+import Data.Ord(Ord((>=), (<)))
 import Data.Maybe(Maybe(Just, Nothing))
 import Data.List((++))
 import Data.Tuple(snd)
@@ -29,13 +29,7 @@ import Text.Printf(printf)
 
 newtype Seconds =
   Seconds Double
-  deriving (Eq, Ord)
-
--- | A show instance that prints to 4 decimal places.
--- This is to take floating-point rounding errors into account.
-instance Show Seconds where
-  showsPrec n (Seconds d) =
-    showParen (n > 10) (showString ("Seconds " ++ printf "%0.4f" d))
+  deriving (Eq, Ord, Show)
 
 class AsSeconds p f s where
   _Seconds ::

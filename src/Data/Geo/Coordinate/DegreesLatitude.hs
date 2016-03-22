@@ -65,7 +65,7 @@ instance (Choice p, Applicative f) => AsDegreesLatitude p f Int where
                then Just (DegreesLatitude i)
                else Nothing)
 
--- | Setting a value within the range @-90@ and @90@ using modulo arithmetic.
+-- | Setting a value within the range @-90@ and @0@ using modulo arithmetic.
 --
 -- >>> modDegreesLatitude 7
 -- DegreesLatitude 7

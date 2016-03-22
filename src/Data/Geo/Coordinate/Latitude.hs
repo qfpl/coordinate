@@ -7,6 +7,7 @@ module Data.Geo.Coordinate.Latitude(
   Latitude
 , AsLatitude(..)
 , modLatitude
+, modLatitude'
 , antipodeLatitude
 ) where
 
@@ -14,8 +15,8 @@ import Control.Applicative(Applicative)
 import Control.Category(Category(id))
 import Control.Lens(Choice, Profunctor, Optic', Iso', iso, prism', lens, (#), (^?))
 import Control.Monad(Monad(return))
-import Data.Eq(Eq)
-import Data.Fixed(divMod')
+import Data.Eq(Eq((==)))
+import Data.Fixed(divMod', mod')
 import Data.Functor(Functor)
 import Data.Geo.Coordinate.DegreesLatitude(DegreesLatitude, AsDegreesLatitude(_DegreesLatitude), modDegreesLatitude, antipodeDegreesLatitude)
 import Data.Geo.Coordinate.Minutes(AsMinutes(_Minutes), Minutes, modMinutes)
@@ -196,7 +197,21 @@ modLatitude ::
 modLatitude d m s =
   let (ts, rs) = s `divMod'` 60
       (tm, rm) = (ts + m) `divMod'` 60
-  in Latitude (modDegreesLatitude (tm + d)) (modMinutes rm) (modSeconds rs)
+      zd = modDegreesLatitude (tm + d)
+      zm = modMinutes rm
+      zs = modSeconds rs
+  in Latitude undefined zm zs
+
+modLatitude' ::
+  Double
+  -> Latitude
+modLatitude' x =
+  let x' = if x == 90 then 90 else mod' (x + 90) 180 - 90
+      (d, z) = properFraction x
+      (m, s) = properFraction ((z :: Double) * 60)
+  in  modLatitude d (abs m) (abs s * 60)
+
+undefined = undefined
 
 -- | The latitude that is symmetrical around the equator.
 --
