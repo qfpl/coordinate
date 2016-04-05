@@ -34,6 +34,7 @@ library
                     , tagged >= 0.7
                     , transformers >= 0.3.0.0
                     , radian >= 0.0.4
+                    , digit >= 0.2.6
 
   ghc-options:
                     -Wall

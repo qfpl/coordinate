@@ -16,7 +16,7 @@ import Data.Bool((&&))
 import Data.Eq(Eq((==)))
 import Data.Int(Int)
 import Data.Maybe(Maybe(Just, Nothing))
-import Data.Ord(Ord((<), (>)))
+import Data.Ord(Ord((<=), (>)))
 import Prelude(Show, mod, Num(negate, (+), (-)))
 
 -- $setup
@@ -36,7 +36,8 @@ instance AsDegreesLongitude p f DegreesLongitude where
   _DegreesLongitude =
     id
 
--- | A prism on degrees longitude to an integer between -180 and 180 exclusive.
+-- | A prism on degrees longitude to an integer between -180 exclusive and 180
+-- exclusive.
 --
 -- >>> (7 :: Int) ^? _DegreesLongitude
 -- Just (DegreesLongitude 7)
@@ -61,7 +62,7 @@ instance (Choice p, Applicative f) => AsDegreesLongitude p f Int where
   _DegreesLongitude =
     prism'
       (\(DegreesLongitude i) -> i)
-      (\i -> if i > -180 && i < 180
+      (\i -> if i > -180 && i <= 180
                then Just (DegreesLongitude i)
                else Nothing)
 
