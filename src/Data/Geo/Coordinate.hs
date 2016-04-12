@@ -13,6 +13,10 @@ import Data.Geo.Coordinate.Minutes as C
 import Data.Geo.Coordinate.Seconds as C
 -}
 
+{-
+modIntegralLatitude01_89 :: Integral a => a -> IntegralLatitude01_89
+integralLatitude01_89 :: Integral a => Prism a IntegralLatitude01_89
+-}
 data IntegralLatitude01_89 =
   IntegralLatitude_01
   | IntegralLatitude_02
@@ -105,11 +109,23 @@ data IntegralLatitude01_89 =
   | IntegralLatitude_89
   deriving (Eq, Ord, Show)
 
+{-
+modIntegralLatitude :: Integral a => a -> IntegralLatitude
+integralLatitude :: Integral a => Prism a IntegralLatitude
+antipodeIntegralLatitude :: Iso IntegralLatitude IntegralLatitude
+notequator :: Prism IntegralLatitude (Bool, IntegralLatitude01_89)
+equator :: Prism IntegralLatitude ()
+-}
 data IntegralLatitude =
   Equator
   | IntermediateLatitude Bool IntegralLatitude01_89
   deriving (Eq, Ord, Show)
 
+{-
+antipodeLatitude :: Iso Latitude Latitude
+integralLatitudeL :: Lens Latitude IntegralLatitude
+mantissLatitude :: Lens Latitude Digits
+-}
 data Latitude =
   Latitude IntegralLatitude Digits
   deriving (Eq, Ord, Show)  
