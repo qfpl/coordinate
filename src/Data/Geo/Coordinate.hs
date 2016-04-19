@@ -528,9 +528,7 @@ instance (Profunctor p, Functor f) => Antipodal p f IntegralLatitude where
           Equator
         neg (IntermediateLatitude p z) =
           IntermediateLatitude (not p) z
-    in  iso
-          neg
-          neg
+    in  involuted neg
 
 class Equatorial p f s where
   _Equator ::
@@ -547,7 +545,9 @@ instance (Choice p, Applicative f) => Equatorial p f IntegralLatitude where
                  Nothing)
 
 data Latitude =
-  Latitude IntegralLatitude Digits
+  Latitude
+    IntegralLatitude
+    Digits
   deriving (Eq, Ord, Show)
 
 class AsLatitude p f s where
@@ -586,9 +586,7 @@ instance (Profunctor p, Functor f) => Antipodal p f Latitude where
   _Antipode =
     let ap (Latitude l d) =
           Latitude (_Antipode # l) d
-    in  iso
-          ap
-          ap
+    in  involuted ap
 
 instance (Choice p, Applicative f) => Equatorial p f Latitude where
   _Equator =
@@ -735,17 +733,84 @@ mod180IntegralLongitude000_170 n =
   let n' = n `mod` 180
   in fromMaybe (mod180IntegralLongitude000_170 n') (n' ^? integralLongitude000_170)
 
+-- negative zero is 180
 data IntegralLongitude =
   IntegralLongitude
     Bool -- True is positive
     IntegralLongitude000_179
   deriving (Eq, Ord, Show) 
 
+integralLongitude ::
+  Integral a =>
+  Prism' a IntegralLongitude
+integralLongitude =
+  prism'
+    (\(IntegralLongitude s l) -> if not s && l == IntegralLongitude000_179 IntegralLongitude00x x0
+                                   then
+                                     180
+                                   else
+                                     bool negate id s $ integralLongitude000_170 # l) 
+    (\l -> case l of
+             180 ->
+               Just (IntegralLongitude False (IntegralLongitude000_179 IntegralLongitude00x x0))
+             _ ->
+               asum ((\(f, p) -> IntegralLongitude p <$> f l ^? integralLongitude000_170) <$> [(id, True), (negate, False)]))
+
+-- mod180
+-- Antipodal
+
 data Longitude =
   Longitude
     IntegralLongitude
     Digits
   deriving (Eq, Ord, Show)
+
+{-
+
+data Latitude =
+  Latitude
+    IntegralLatitude
+    Digits
+  deriving (Eq, Ord, Show)
+
+class AsLatitude p f s where
+  _Latitude ::
+    Optic' p f s Latitude
+
+instance AsLatitude p f Latitude where
+  _Latitude =
+    id
+
+instance (Profunctor p, Functor f) => AsLatitude p f (IntegralLatitude, Digits) where
+  _Latitude =
+    iso 
+      (\(l, d) -> Latitude l d)
+      (\(Latitude l d) -> (l, d))
+
+instance (Profunctor p, Functor f) => AsLatitude p f (Digits, IntegralLatitude) where
+  _Latitude =
+    swapped . _Latitude
+
+latitudeIntegral ::
+  Lens'
+    Latitude
+    IntegralLatitude
+latitudeIntegral =
+  from (_Latitude :: Iso' (IntegralLatitude, Digits) Latitude) . _1
+
+latitudeMantissa ::
+  Lens'
+    Latitude
+    Digits
+latitudeMantissa =
+  from (_Latitude :: Iso' (IntegralLatitude, Digits) Latitude) . _2
+
+instance (Profunctor p, Functor f) => Antipodal p f Latitude where
+  _Antipode =
+    let ap (Latitude l d) =
+          Latitude (_Antipode # l) d
+    in  involuted ap
+-}
 
 data FixedPoint =
   FixedPoint
