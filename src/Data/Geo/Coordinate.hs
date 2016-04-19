@@ -1,7 +1,12 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Data.Geo.Coordinate ({- module C, -} IntegralLatitude01_89(..), IntegralLatitude(..), IntegralLongitude00x_17x(..), IntegralLongitude000_179(..), IntegralLongitude(..)) where
 
 import Prelude
+import Data.Bool
 import Data.Digit
+import Data.Foldable
 import Data.Maybe
 import Control.Lens
 
@@ -473,34 +478,109 @@ integralLatitude01_89 =
              _ ->
                Nothing)
 
-modIntegralLatitude01_89 ::
+mod89IntegralLatitude01_89 ::
   Integral a =>
   a
   -> IntegralLatitude01_89
-modIntegralLatitude01_89 n =
+mod89IntegralLatitude01_89 n =
   let n' = n `mod` 89
-  in fromMaybe (modIntegralLatitude01_89 n') (n' ^? integralLatitude01_89)
+  in fromMaybe (mod89IntegralLatitude01_89 n') (n' ^? integralLatitude01_89)
 
-{-
-modIntegralLatitude :: Integral a => a -> IntegralLatitude
-integralLatitude :: Integral a => Prism a IntegralLatitude
-antipodeIntegralLatitude :: Iso IntegralLatitude IntegralLatitude
-notequator :: Prism IntegralLatitude (Bool, IntegralLatitude01_89)
-equator :: Prism IntegralLatitude ()
--}
 data IntegralLatitude =
   Equator
-  | IntermediateLatitude Bool IntegralLatitude01_89
+  | IntermediateLatitude
+      Bool -- True is positive
+      IntegralLatitude01_89
   deriving (Eq, Ord, Show)
 
+integralLatitude ::
+  Integral a =>
+  Prism' a IntegralLatitude
+integralLatitude =
+  prism'
+    (\l -> case l of
+             Equator ->
+               0
+             IntermediateLatitude z t ->
+               let r = integralLatitude01_89 # t
+               in bool (-r) r z)
+    (\l -> case l of
+             0 ->
+               Just Equator
+             _ ->
+               asum ((\(f, p) -> IntermediateLatitude p <$> (f l ^? integralLatitude01_89)) <$> [(id, True), (negate, False)]))
+
+mod179IntegralLatitude ::
+  Integral a =>
+  a
+  -> IntegralLatitude
+mod179IntegralLatitude n =
+  let n' = ((n + 89) `mod` 179) - 89
+  in fromMaybe (mod179IntegralLatitude n') (n' ^? integralLatitude)
+
+class Antipodal p f s where
+  _Antipode ::
+    Optic' p f s s
+
+instance (Profunctor p, Functor f) => Antipodal p f IntegralLatitude where
+  _Antipode =
+    let neg Equator =
+          Equator
+        neg (IntermediateLatitude p z) =
+          IntermediateLatitude (not p) z
+    in  iso
+          neg
+          neg
+
+class Equatorial p f s where
+  _Equator ::
+    Optic' p f s ()
+
+instance (Choice p, Applicative f) => Equatorial p f IntegralLatitude where
+  _Equator =
+    prism'
+      (\() -> Equator)
+      (\l -> case l of
+               Equator ->
+                 Just ()
+               IntermediateLatitude _ _ ->
+                 Nothing)
+
+
 {-
+latitude :: Fractional a => Prism a Latitude
 antipodeLatitude :: Iso Latitude Latitude
 integralLatitudeL :: Lens Latitude IntegralLatitude
 mantissLatitude :: Lens Latitude Digits
 -}
 data Latitude =
   Latitude IntegralLatitude Digits
-  deriving (Eq, Ord, Show)  
+  deriving (Eq, Ord, Show)
+
+latitude ::
+  (Floating a, RealFrac a) =>
+  Prism' a Latitude
+latitude =
+  prism'
+    (\(Latitude l d) -> let t = integralLatitude # l in fromIntegral (t :: Int) + mantissa d)
+    (\x -> let (y, m) = properFraction x
+           in (\i -> Latitude i (mantissaDigits (abs m))) <$> (y :: Int) ^? integralLatitude)
+
+mantissaDigits ::
+  RealFrac a =>
+  a
+  -> Digits
+mantissaDigits n =
+  case n of
+    0 ->
+      _Empty # ()
+    _ ->
+      let (x, m) = properFraction (n * 10)
+      in case (x :: Int) ^? digit of
+           Nothing -> 
+             _Empty # ()
+           Just d ->
+             d `cons` mantissaDigits m
 
 data IntegralLongitude00x_17x =
   IntegralLongitude00x
