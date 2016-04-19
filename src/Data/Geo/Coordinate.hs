@@ -776,53 +776,43 @@ data Longitude =
     Digits
   deriving (Eq, Ord, Show)
 
-{-
+class AsLongitude p f s where
+  _Longitude ::
+    Optic' p f s Longitude
 
-data Latitude =
-  Latitude
-    IntegralLatitude
-    Digits
-  deriving (Eq, Ord, Show)
-
-class AsLatitude p f s where
-  _Latitude ::
-    Optic' p f s Latitude
-
-instance AsLatitude p f Latitude where
-  _Latitude =
+instance AsLongitude p f Longitude where
+  _Longitude =
     id
 
-instance (Profunctor p, Functor f) => AsLatitude p f (IntegralLatitude, Digits) where
-  _Latitude =
+instance (Profunctor p, Functor f) => AsLongitude p f (IntegralLongitude, Digits) where
+  _Longitude =
     iso 
-      (\(l, d) -> Latitude l d)
-      (\(Latitude l d) -> (l, d))
+      (\(l, d) -> Longitude l d)
+      (\(Longitude l d) -> (l, d))
 
-instance (Profunctor p, Functor f) => AsLatitude p f (Digits, IntegralLatitude) where
-  _Latitude =
-    swapped . _Latitude
+instance (Profunctor p, Functor f) => AsLongitude p f (Digits, IntegralLongitude) where
+  _Longitude =
+    swapped . _Longitude
 
-latitudeIntegral ::
+longitudeIntegral ::
   Lens'
-    Latitude
-    IntegralLatitude
-latitudeIntegral =
-  from (_Latitude :: Iso' (IntegralLatitude, Digits) Latitude) . _1
+    Longitude
+    IntegralLongitude
+longitudeIntegral =
+  from (_Longitude :: Iso' (IntegralLongitude, Digits) Longitude) . _1
 
-latitudeMantissa ::
+longitudeMantissa ::
   Lens'
-    Latitude
+    Longitude
     Digits
-latitudeMantissa =
-  from (_Latitude :: Iso' (IntegralLatitude, Digits) Latitude) . _2
+longitudeMantissa =
+  from (_Longitude :: Iso' (IntegralLongitude, Digits) Longitude) . _2
 
-instance (Profunctor p, Functor f) => Antipodal p f Latitude where
+instance (Profunctor p, Functor f) => Antipodal p f Longitude where
   _Antipode =
-    let ap (Latitude l d) =
-          Latitude (_Antipode # l) d
+    let ap (Longitude l d) =
+          Longitude (_Antipode # l) d
     in  involuted ap
--}
-
 
 data FixedPoint =
   FixedPoint
