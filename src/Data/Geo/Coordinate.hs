@@ -546,41 +546,55 @@ instance (Choice p, Applicative f) => Equatorial p f IntegralLatitude where
                IntermediateLatitude _ _ ->
                  Nothing)
 
-
-{-
-latitude :: Fractional a => Prism a Latitude
-antipodeLatitude :: Iso Latitude Latitude
-integralLatitudeL :: Lens Latitude IntegralLatitude
-mantissLatitude :: Lens Latitude Digits
--}
 data Latitude =
   Latitude IntegralLatitude Digits
   deriving (Eq, Ord, Show)
 
-latitude ::
-  (Floating a, RealFrac a) =>
-  Prism' a Latitude
-latitude =
-  prism'
-    (\(Latitude l d) -> let t = integralLatitude # l in fromIntegral (t :: Int) + mantissa d)
-    (\x -> let (y, m) = properFraction x
-           in (\i -> Latitude i (mantissaDigits (abs m))) <$> (y :: Int) ^? integralLatitude)
+class AsLatitude p f s where
+  _Latitude ::
+    Optic' p f s Latitude
 
-mantissaDigits ::
-  RealFrac a =>
-  a
-  -> Digits
-mantissaDigits n =
-  case n of
-    0 ->
-      _Empty # ()
-    _ ->
-      let (x, m) = properFraction (n * 10)
-      in case (x :: Int) ^? digit of
-           Nothing -> 
-             _Empty # ()
-           Just d ->
-             d `cons` mantissaDigits m
+instance AsLatitude p f Latitude where
+  _Latitude =
+    id
+
+instance (Profunctor p, Functor f) => AsLatitude p f (IntegralLatitude, Digits) where
+  _Latitude =
+    iso 
+      (\(l, d) -> Latitude l d)
+      (\(Latitude l d) -> (l, d))
+
+instance (Profunctor p, Functor f) => AsLatitude p f (Digits, IntegralLatitude) where
+  _Latitude =
+    swapped . _Latitude
+
+latitudeIntegral ::
+  Lens'
+    Latitude
+    IntegralLatitude
+latitudeIntegral =
+  from (_Latitude :: Iso' (IntegralLatitude, Digits) Latitude) . _1
+
+latitudeMantissa ::
+  Lens'
+    Latitude
+    Digits
+latitudeMantissa =
+  from (_Latitude :: Iso' (IntegralLatitude, Digits) Latitude) . _2
+
+instance (Profunctor p, Functor f) => Antipodal p f Latitude where
+  _Antipode =
+    let ap (Latitude l d) =
+          Latitude (_Antipode # l) d
+    in  iso
+          ap
+          ap
+
+instance (Choice p, Applicative f) => Equatorial p f Latitude where
+  _Equator =
+    prism'
+      (\() -> Latitude Equator undefined)
+      (\(Latitude l d) -> if l == Equator && all (== x0) (digitsI # d) then Just () else Nothing)
 
 data IntegralLongitude00x_17x =
   IntegralLongitude00x
