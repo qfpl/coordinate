@@ -756,8 +756,19 @@ integralLongitude =
              _ ->
                asum ((\(f, p) -> IntegralLongitude p <$> f l ^? integralLongitude000_170) <$> [(id, True), (negate, False)]))
 
--- mod180
--- Antipodal
+
+mod360IntegralLongitude ::
+  Integral a =>
+  a
+  -> IntegralLongitude
+mod360IntegralLongitude n =
+  let n' = ((n + 179) `mod` 360) - 179
+  in fromMaybe (mod360IntegralLongitude n') (n' ^? integralLongitude)
+
+instance (Profunctor p, Functor f) => Antipodal p f IntegralLongitude where
+  _Antipode =
+    involuted
+      (\(IntegralLongitude s l) -> IntegralLongitude (not s) l)
 
 data Longitude =
   Longitude
@@ -811,6 +822,7 @@ instance (Profunctor p, Functor f) => Antipodal p f Latitude where
           Latitude (_Antipode # l) d
     in  involuted ap
 -}
+
 
 data FixedPoint =
   FixedPoint
