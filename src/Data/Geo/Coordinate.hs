@@ -1,5 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
 
 module Data.Geo.Coordinate ({- module C, -} IntegralLatitude01_89(..), IntegralLatitude(..), IntegralLongitude00x_17x(..), IntegralLongitude000_179(..), IntegralLongitude(..)) where
 
@@ -820,11 +821,127 @@ data FixedPoint =
     Longitude
   deriving (Eq, Ord, Show)
 
+class AsFixedPoint p f s where
+  _FixedPoint ::
+    Optic' p f s FixedPoint
+
+instance AsFixedPoint p f FixedPoint where
+  _FixedPoint =
+    id
+
+instance (Profunctor p, Functor f) => AsFixedPoint p f (Latitude, Longitude) where
+  _FixedPoint =
+    iso
+      (\(lat, lon) -> FixedPoint lat lon)
+      (\(FixedPoint lat lon) -> (lat, lon))
+
+instance (Profunctor p, Functor f) => AsFixedPoint p f (Longitude, Latitude) where
+  _FixedPoint =
+    swapped . _FixedPoint
+
+instance (p ~ (->), Functor f) => AsLatitude p f FixedPoint where
+  _Latitude =
+    lens
+      (\(FixedPoint lat _) -> lat)
+      (\(FixedPoint _ lon) lat -> FixedPoint lat lon)
+
+instance (p ~ (->), Functor f) => AsLongitude p f FixedPoint where
+  _Longitude =
+    lens
+      (\(FixedPoint _ lon) -> lon)
+      (\(FixedPoint lat _) lon -> FixedPoint lat lon)
+
+instance (Profunctor p, Functor f) => Antipodal p f FixedPoint where
+  _Antipode =
+    involuted
+      (\(FixedPoint lat lon) -> FixedPoint (_Antipode # lat) (_Antipode # lon))
+      
+instance (p ~ (->), Applicative f) => Equatorial p f FixedPoint where
+  _Equator =
+    _Latitude . _Equator
+
+-- etc etc (instances of Latitude, Longitude)
+
 data Coordinate =
   Coordinate FixedPoint
   | NorthPole
   | SouthPole
   deriving (Eq, Ord, Show)
+
+class AsCoordinate p f s where
+  _Coordinate ::
+    Optic' p f s Coordinate
+
+instance AsCoordinate p f Coordinate where
+  _Coordinate =
+    id
+
+instance (Choice p, Applicative f) => AsFixedPoint p f Coordinate where
+  _FixedPoint =
+    prism'
+      Coordinate
+      (\c -> case c of
+               Coordinate p -> 
+                 Just p
+               NorthPole ->
+                 Nothing
+               SouthPole ->
+                 Nothing)
+
+class AsNorthPole p f s where
+  _NorthPole ::
+    Optic' p f s ()
+
+instance (Choice p, Applicative f) => AsNorthPole p f Coordinate where
+  _NorthPole =
+    prism'
+      (\() -> NorthPole)
+      (\c -> case c of
+               Coordinate _ -> 
+                 Nothing
+               NorthPole ->
+                 Just ()
+               SouthPole ->
+                 Nothing)
+
+class AsSouthPole p f s where
+  _SouthPole ::
+    Optic' p f s ()
+
+instance (Choice p, Applicative f) => AsSouthPole p f Coordinate where
+  _SouthPole =
+    prism'
+      (\() -> SouthPole)
+      (\c -> case c of
+               Coordinate _ -> 
+                 Nothing
+               NorthPole ->
+                 Nothing
+               SouthPole ->
+                 Just ())
+   
+instance (p ~ (->), Applicative f) => AsLatitude p f Coordinate where
+  _Latitude =
+    _FixedPoint . _Latitude
+
+instance (p ~ (->), Applicative f) => AsLongitude p f Coordinate where
+  _Longitude =
+    _FixedPoint . _Longitude
+
+instance (Profunctor p, Functor f) => Antipodal p f Coordinate where
+  _Antipode =
+    involuted
+      (\c -> case c of
+               NorthPole -> 
+                 NorthPole
+               SouthPole ->
+                 SouthPole
+               Coordinate x ->
+                 Coordinate (_Antipode # x))
+
+instance (p ~ (->), Applicative f) => Equatorial p f Coordinate where
+  _Equator =
+    _Latitude . _Equator
 
 data Sixty0x_5x =
   Sixty0x_0x
