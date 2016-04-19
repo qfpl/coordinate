@@ -617,15 +617,127 @@ data IntegralLongitude00x_17x =
   | IntegralLongitude17x
   deriving (Eq, Ord, Show) 
 
+integralLongitude00x_17x ::
+  Integral a =>
+  Prism' a IntegralLongitude00x_17x
+integralLongitude00x_17x =
+  prism'
+    (\l -> case l of
+             IntegralLongitude00x ->
+               0
+             IntegralLongitude01x ->
+               1
+             IntegralLongitude02x ->
+               2
+             IntegralLongitude03x ->
+               3
+             IntegralLongitude04x ->
+               4
+             IntegralLongitude05x ->
+               5
+             IntegralLongitude06x ->
+               6
+             IntegralLongitude07x ->
+               7
+             IntegralLongitude08x ->
+               8
+             IntegralLongitude09x ->
+               9
+             IntegralLongitude10x ->
+               10
+             IntegralLongitude11x ->
+               11
+             IntegralLongitude12x ->
+               12
+             IntegralLongitude13x ->
+               13
+             IntegralLongitude14x ->
+               14
+             IntegralLongitude15x ->
+               15
+             IntegralLongitude16x ->
+               16
+             IntegralLongitude17x ->
+               17)
+    (\l -> case l of
+             0 ->
+               Just IntegralLongitude00x
+             1 ->
+               Just IntegralLongitude01x
+             2 ->
+               Just IntegralLongitude02x
+             3 ->
+               Just IntegralLongitude03x
+             4 ->
+               Just IntegralLongitude04x
+             5 ->
+               Just IntegralLongitude05x
+             6 ->
+               Just IntegralLongitude06x
+             7 ->
+               Just IntegralLongitude07x
+             8 ->
+               Just IntegralLongitude08x
+             9 ->
+               Just IntegralLongitude09x
+             10 ->
+               Just IntegralLongitude10x
+             11 ->
+               Just IntegralLongitude11x
+             12 ->
+               Just IntegralLongitude12x
+             13 ->
+               Just IntegralLongitude13x
+             14 ->
+               Just IntegralLongitude14x
+             15 ->
+               Just IntegralLongitude15x
+             16 ->
+               Just IntegralLongitude16x
+             17 ->
+               Just IntegralLongitude17x
+             _ ->
+               Nothing)
+
+mod18IntegralLongitude00x_17x ::
+  Integral a =>
+  a
+  -> IntegralLongitude00x_17x
+mod18IntegralLongitude00x_17x n =
+  let n' = n `mod` 18
+  in fromMaybe (mod18IntegralLongitude00x_17x n') (n' ^? integralLongitude00x_17x)
+
 data IntegralLongitude000_179 =
   IntegralLongitude000_179
     IntegralLongitude00x_17x
     Digit
   deriving (Eq, Ord, Show) 
 
+integralLongitude000_170 ::
+  Integral a =>
+  Prism' a IntegralLongitude000_179
+integralLongitude000_170 =
+  prism'
+    (\(IntegralLongitude000_179 t x) -> let u = integralLongitude00x_17x # t
+                                            y = digit # x
+                                        in u * 10 + y)
+    (\l -> let (t, x) = divMod l 10
+           in  do  u <- t ^? integralLongitude00x_17x
+                   y <- x ^? digit
+                   return (IntegralLongitude000_179 u y))
+
+
+mod180IntegralLongitude000_170 ::
+  Integral a =>
+  a
+  -> IntegralLongitude000_179
+mod180IntegralLongitude000_170 n =
+  let n' = n `mod` 180
+  in fromMaybe (mod180IntegralLongitude000_170 n') (n' ^? integralLongitude000_170)
+
 data IntegralLongitude =
   IntegralLongitude
-    Bool
+    Bool -- True is positive
     IntegralLongitude000_179
   deriving (Eq, Ord, Show) 
 
