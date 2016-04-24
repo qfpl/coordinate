@@ -957,3 +957,10 @@ data Sixty =
     Sixty0x_5x
     Digit
   deriving (Eq, Ord, Show)
+
+hi ::
+  Prism'
+    Rational
+    Float
+hi = 
+  prism' toRational (\r -> let x = fromRational r :: Float in if r == toRational x then Just x else Nothing)
