@@ -31,11 +31,8 @@ library
   build-depends:
                       base < 5 && >= 3
                     , lens >= 4.0
-                    , tagged >= 0.7
-                    , transformers >= 0.3.0.0
-                    , radian >= 0.0.4
-                    , digit >= 0.2.7
-
+                    , transformers
+                    
   ghc-options:
                     -Wall
 
@@ -47,13 +44,6 @@ library
 
   exposed-modules:
                     Data.Geo.Coordinate
-                    Data.Geo.Coordinate.Coordinate
-                    Data.Geo.Coordinate.DegreesLatitude
-                    Data.Geo.Coordinate.DegreesLongitude
-                    Data.Geo.Coordinate.Latitude
-                    Data.Geo.Coordinate.Longitude
-                    Data.Geo.Coordinate.Minutes
-                    Data.Geo.Coordinate.Seconds
 
 test-suite doctests
   type:
