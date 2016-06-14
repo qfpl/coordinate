@@ -17,11 +17,10 @@ import Control.Monad.Trans.Class(MonadTrans(lift))
 import Control.Monad.Trans.Reader(ReaderT)
 import Control.Monad.Zip(MonadZip(mzip))
 import Data.Eq(Eq)
-import Data.Int(Int)
 import Data.Functor(Functor(fmap), (<$>))
 import Data.Functor.Identity(Identity(Identity, runIdentity))
 import Data.Ord(Ord)
-import Prelude(Show, Double)
+import Prelude(Show, Double, Num((*), (-)), Fractional((/)))
 
 data ECEF =
   ECEF {
@@ -72,13 +71,13 @@ instance HasDoubles LLH where
 data Ellipsoid =
   Ellipsoid {
     _semiMajor ::
-      Int
+      Double
   , _flattening ::
       Double
   } deriving (Eq, Ord, Show)
 
 makeClassy ''Ellipsoid
-
+  
 wgs84 ::
   Ellipsoid
 wgs84 =
@@ -161,3 +160,12 @@ instance MonadFix f => MonadFix (EllipsoidReaderT f) where
 instance MonadZip f => MonadZip (EllipsoidReaderT f) where
   EllipsoidReaderT a `mzip` EllipsoidReaderT b =
     EllipsoidReaderT (liftA2 mzip a b)
+
+semiMinor ::
+  HasEllipsoid c =>
+  c
+  -> Double
+semiMinor e =
+  let Ellipsoid m f = e ^. ellipsoid
+  in m * (1 - 1 / f)
+  
