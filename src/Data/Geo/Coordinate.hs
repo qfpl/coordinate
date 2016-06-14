@@ -1,20 +1,25 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Data.Geo.Coordinate where
 
 import Control.Category((.))
 import Control.Applicative(Applicative((<*>), pure), liftA2, Alternative((<|>), empty))
 import Control.Category(id)
-import Control.Lens(makeClassy, Traversal',  Iso', iso, (^.), (&))
-import Control.Monad(Monad((>>=), return))
+import Control.Lens(makeClassy, Traversal',  Iso', iso, from, (^.), (&), Wrapped(Unwrapped, _Wrapped'), Rewrapped)
+import Control.Monad(Monad((>>=), return), MonadPlus(mzero, mplus))
 import Control.Monad.Fix(MonadFix(mfix))
 import Control.Monad.IO.Class(MonadIO(liftIO))
 import Control.Monad.Trans.Class(MonadTrans(lift))
+import Control.Monad.Trans.Reader(ReaderT)
 import Control.Monad.Zip(MonadZip(mzip))
 import Data.Eq(Eq)
 import Data.Int(Int)
 import Data.Functor(Functor(fmap), (<$>))
+import Data.Functor.Identity(Identity(Identity, runIdentity))
 import Data.Ord(Ord)
 import Prelude(Show, Double)
 
@@ -81,52 +86,78 @@ wgs84 =
     6378137
     298.257223563
 
-newtype EllipsoidReader f a =
-  EllipsoidReader (Ellipsoid -> f a)
+newtype EllipsoidReaderT f a =
+  EllipsoidReaderT (Ellipsoid -> f a)
+
+type EllipsoidReader a =
+  EllipsoidReaderT Identity a
+
+instance (t ~ EllipsoidReaderT f b) => Rewrapped (EllipsoidReaderT f a) t
+
+instance Wrapped (EllipsoidReaderT f a) where
+  type Unwrapped (EllipsoidReaderT f a) =
+    Ellipsoid -> f a
+  _Wrapped' =
+    iso
+      (\(EllipsoidReaderT k) -> k)
+      EllipsoidReaderT
 
 runEllipsoidReader ::
   Iso'
-    (EllipsoidReader f a)
-    (Ellipsoid -> f a)
+    (EllipsoidReader a)
+    (Ellipsoid -> a)
 runEllipsoidReader =
   iso
-    (\(EllipsoidReader k) -> k)
-    EllipsoidReader
+    (\(EllipsoidReaderT k) -> runIdentity . k)
+    (\k -> EllipsoidReaderT (Identity . k))
 
-instance Functor f => Functor (EllipsoidReader f) where
-  fmap f (EllipsoidReader k) =
-    EllipsoidReader (fmap f . k)
+runEllipsoidReaderT ::
+  Iso'
+    (EllipsoidReaderT f a)
+    (ReaderT Ellipsoid f a)
+runEllipsoidReaderT =
+  from (_Wrapped' . from _Wrapped')
 
-instance Applicative f => Applicative (EllipsoidReader f) where
+instance Functor f => Functor (EllipsoidReaderT f) where
+  fmap f (EllipsoidReaderT k) =
+    EllipsoidReaderT (fmap f . k)
+
+instance Applicative f => Applicative (EllipsoidReaderT f) where
   pure =
-    EllipsoidReader . pure . pure
-  EllipsoidReader f <*> EllipsoidReader a =
-      EllipsoidReader (liftA2 (<*>) f a)
+    EllipsoidReaderT . pure . pure
+  EllipsoidReaderT f <*> EllipsoidReaderT a =
+      EllipsoidReaderT (liftA2 (<*>) f a)
 
-instance Monad f => Monad (EllipsoidReader f) where
+instance Monad f => Monad (EllipsoidReaderT f) where
   return =
-    EllipsoidReader . return . return
-  EllipsoidReader k >>= f =
-    EllipsoidReader (\e -> k e >>= \q -> e & f q ^. runEllipsoidReader)
+    EllipsoidReaderT . return . return
+  EllipsoidReaderT k >>= f =
+    EllipsoidReaderT (\e -> k e >>= \q -> e & f q ^. _Wrapped')
 
-instance Alternative f => Alternative (EllipsoidReader f) where
+instance Alternative f => Alternative (EllipsoidReaderT f) where
   empty =
-    EllipsoidReader (pure empty)
-  EllipsoidReader a <|> EllipsoidReader b =
-    EllipsoidReader (liftA2 (<|>) a b)
+    EllipsoidReaderT (pure empty)
+  EllipsoidReaderT a <|> EllipsoidReaderT b =
+    EllipsoidReaderT (liftA2 (<|>) a b)
 
-instance MonadTrans EllipsoidReader where
+instance MonadPlus f => MonadPlus (EllipsoidReaderT f) where
+  mzero =
+    EllipsoidReaderT (pure mzero)
+  EllipsoidReaderT a `mplus` EllipsoidReaderT b =
+    EllipsoidReaderT (liftA2 mplus a b)
+
+instance MonadTrans EllipsoidReaderT where
   lift =
-    EllipsoidReader . pure
+    EllipsoidReaderT . pure
 
-instance MonadIO f => MonadIO (EllipsoidReader f) where
+instance MonadIO f => MonadIO (EllipsoidReaderT f) where
   liftIO =
-    EllipsoidReader . pure . liftIO 
+    EllipsoidReaderT . pure . liftIO 
 
-instance MonadFix f => MonadFix (EllipsoidReader f) where
+instance MonadFix f => MonadFix (EllipsoidReaderT f) where
   mfix f =
-    EllipsoidReader (\e -> mfix (\q -> e & f q ^. runEllipsoidReader))
+    EllipsoidReaderT (\e -> mfix (\q -> e & f q ^. _Wrapped'))
 
-instance MonadZip f => MonadZip (EllipsoidReader f) where
-  EllipsoidReader a `mzip` EllipsoidReader b =
-    EllipsoidReader (liftA2 mzip a b)
+instance MonadZip f => MonadZip (EllipsoidReaderT f) where
+  EllipsoidReaderT a `mzip` EllipsoidReaderT b =
+    EllipsoidReaderT (liftA2 mzip a b)
