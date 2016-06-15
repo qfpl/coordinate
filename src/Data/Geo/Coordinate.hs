@@ -117,6 +117,13 @@ runEllipsoidReaderT ::
 runEllipsoidReaderT =
   from (_Wrapped' . from _Wrapped')
 
+hoistEllipsoidReader ::
+  Applicative f =>
+  EllipsoidReader a
+  -> EllipsoidReaderT f a
+hoistEllipsoidReader (EllipsoidReaderT k) =
+  EllipsoidReaderT (pure . runIdentity . k)
+
 instance Functor f => Functor (EllipsoidReaderT f) where
   fmap f (EllipsoidReaderT k) =
     EllipsoidReaderT (fmap f . k)
@@ -160,6 +167,30 @@ instance MonadFix f => MonadFix (EllipsoidReaderT f) where
 instance MonadZip f => MonadZip (EllipsoidReaderT f) where
   EllipsoidReaderT a `mzip` EllipsoidReaderT b =
     EllipsoidReaderT (liftA2 mzip a b)
+
+readEllipsoid ::
+  Applicative f =>
+  EllipsoidReaderT f Ellipsoid
+readEllipsoid =
+  EllipsoidReaderT pure
+
+readSemiMajor ::
+  Applicative f =>
+  EllipsoidReaderT f Double
+readSemiMajor =
+  (^. semiMajor) <$> readEllipsoid
+
+readFlattening ::
+  Applicative f =>
+  EllipsoidReaderT f Double
+readFlattening =
+  (^. flattening) <$> readEllipsoid
+
+readSemiMinor ::
+  Applicative f =>
+  EllipsoidReaderT f Double
+readSemiMinor =
+  semiMinor <$> readEllipsoid
 
 semiMinor ::
   HasEllipsoid c =>
