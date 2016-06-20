@@ -9,7 +9,7 @@ module Data.Geo.Coordinate where
 import Control.Category((.))
 import Control.Applicative(Applicative((<*>), pure), liftA2, Alternative((<|>), empty))
 import Control.Category(id)
-import Control.Lens(makeClassy, Traversal',  Iso', iso, from, (^.), (&), Wrapped(Unwrapped, _Wrapped'), Rewrapped)
+import Control.Lens(makeClassy, Traversal',  Iso', Lens', lens, iso, from, (^.), (&), Wrapped(Unwrapped, _Wrapped'), Rewrapped)
 import Control.Monad(Monad((>>=), return), MonadPlus(mzero, mplus))
 import Control.Monad.Fix(MonadFix(mfix))
 import Control.Monad.IO.Class(MonadIO(liftIO))
@@ -20,7 +20,7 @@ import Data.Eq(Eq)
 import Data.Functor(Functor(fmap), (<$>))
 import Data.Functor.Identity(Identity(Identity, runIdentity))
 import Data.Ord(Ord)
-import Prelude(Show, Double, Num((*), (-)), Fractional((/)))
+import Prelude(Show, Double, Num((*), (+), (-)), Fractional((/)))
 
 data ECEF =
   ECEF {
@@ -49,25 +49,6 @@ instance HasDoubles ECEF where
       f y_ <*>
       f z_
 
-data LLH =
-  LLH {
-    _lat ::
-      Double
-  , _lon ::
-      Double
-  , _height ::
-      Double
-  } deriving (Eq, Ord, Show)
-
-makeClassy ''LLH
-
-instance HasDoubles LLH where
-  doubles f (LLH a o h) =
-    LLH <$>
-      f a <*>
-      f o <*>
-      f h
-
 data Ellipsoid =
   Ellipsoid {
     _semiMajor ::
@@ -78,6 +59,24 @@ data Ellipsoid =
 
 makeClassy ''Ellipsoid
   
+flatteningPreservingSemiMinor ::
+  Lens'
+    Ellipsoid
+    Double
+flatteningPreservingSemiMinor =
+  lens
+    semiMinor
+    (\(Ellipsoid _ f) n -> Ellipsoid (n / (1 - 1 / f)) f)
+
+semiMajorPreservingSemiMinor ::
+  Lens'
+    Ellipsoid
+    Double
+semiMajorPreservingSemiMinor =
+  lens
+    semiMinor
+    (\(Ellipsoid m _) n -> Ellipsoid m (1 / (n / m + 1)))
+
 wgs84 ::
   Ellipsoid
 wgs84 =
@@ -200,3 +199,21 @@ semiMinor e =
   let Ellipsoid m f = e ^. ellipsoid
   in m * (1 - 1 / f)
   
+data LLH =
+  LLH {
+    _lat ::
+      Double
+  , _lon ::
+      Double
+  , _height ::
+      Double
+  } deriving (Eq, Ord, Show)
+
+makeClassy ''LLH
+
+instance HasDoubles LLH where
+  doubles f (LLH a o h) =
+    LLH <$>
+      f a <*>
+      f o <*>
+      f h
