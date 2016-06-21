@@ -9,7 +9,7 @@ module Data.Geo.Coordinate where
 import Control.Category((.))
 import Control.Applicative(Applicative((<*>), pure), liftA2, Alternative((<|>), empty))
 import Control.Category(id)
-import Control.Lens(makeClassy, Traversal', Iso', Lens', lens, iso, from, (^.), (&), Wrapped(Unwrapped, _Wrapped'), Rewrapped)
+import Control.Lens(makeClassy, Traversal', ReifiedIso', ReifiedIso(Iso), Iso', Lens', lens, iso, from, (^.), (&), Wrapped(Unwrapped, _Wrapped'), Rewrapped)
 import Control.Monad(Monad((>>=), return), MonadPlus(mzero, mplus))
 import Control.Monad.Fix(MonadFix(mfix))
 import Control.Monad.IO.Class(MonadIO(liftIO))
@@ -146,6 +146,13 @@ hoistEllipsoidReader ::
 hoistEllipsoidReader (EllipsoidReaderT k) =
   EllipsoidReaderT (pure . runIdentity . k)
 
+arrEllipsoidReader ::
+  Applicative f =>
+  (Ellipsoid -> a)
+  -> EllipsoidReaderT f a
+arrEllipsoidReader k =
+  EllipsoidReaderT (pure . k)
+
 instance Functor f => Functor (EllipsoidReaderT f) where
   fmap f (EllipsoidReaderT k) =
     EllipsoidReaderT (fmap f . k)
@@ -164,13 +171,13 @@ instance Monad f => Monad (EllipsoidReaderT f) where
 
 instance Alternative f => Alternative (EllipsoidReaderT f) where
   empty =
-    EllipsoidReaderT (pure empty)
+    EllipsoidReaderT (\_ -> empty)
   EllipsoidReaderT a <|> EllipsoidReaderT b =
     EllipsoidReaderT (liftA2 (<|>) a b)
 
 instance MonadPlus f => MonadPlus (EllipsoidReaderT f) where
   mzero =
-    EllipsoidReaderT (pure mzero)
+    EllipsoidReaderT (\_ -> mzero)
   EllipsoidReaderT a `mplus` EllipsoidReaderT b =
     EllipsoidReaderT (liftA2 mplus a b)
 
@@ -277,12 +284,17 @@ instance HasDoubles LLH where
 
 ----
 
-
 earthGeo ::
-  -- Applicative f =>
-  Iso' ECEF LLH
+  Applicative f =>
+  EllipsoidReaderT f (ReifiedIso' ECEF LLH)
 earthGeo =
-  earthGeo
+  arrEllipsoidReader (\e -> Iso (
+    iso
+      (\(ECEF (XY x_ y_) h_) -> undefined)
+      (\(LLH (LL t_ n_) h_) -> undefined)
+  ))
+
+undefined = undefined
 
 {-
 
