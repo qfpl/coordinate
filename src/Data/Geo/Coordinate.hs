@@ -20,7 +20,7 @@ import Data.Eq(Eq)
 import Data.Functor(Functor(fmap), (<$>))
 import Data.Functor.Identity(Identity(Identity, runIdentity))
 import Data.Ord(Ord)
-import Prelude(Show, Double, Num((*), (+), (-)), Fractional((/)))
+import Prelude hiding (id, (.)) -- (Show, Double, Num((*), (+), (-)), Fractional((/)))
 
 class HasDoubles a where
   doubles ::
@@ -215,6 +215,12 @@ readFlattening ::
 readFlattening =
   (^. flattening) <$> readEllipsoid
 
+readRecipFlattening ::
+  Applicative f =>
+  EllipsoidReaderT f Double
+readRecipFlattening =
+  (\q -> 1 / q ^. flattening) <$> readEllipsoid
+
 readSemiMinor ::
   Applicative f =>
   EllipsoidReaderT f Double
@@ -233,13 +239,26 @@ eccentricitySquared ::
   Applicative f =>
   EllipsoidReaderT f Double
 eccentricitySquared =
-  (\f -> 2 * f - (f * f)) <$> readFlattening
+  (\f -> 2 * f - (f * f)) <$> readRecipFlattening
 
 eccentricitySquared' ::
   Applicative f =>
   EllipsoidReaderT f Double
 eccentricitySquared' =
-  (\f -> (f * (2 - f)) / (1 - f * f)) <$> readFlattening
+  (\f -> (f * (2 - f)) / (1 - f * f)) <$> readRecipFlattening
+
+normal ::
+  Applicative f =>
+  Double
+  -> EllipsoidReaderT f Double
+normal lat =
+  ($ lat) <$> normalt
+
+normalt ::
+  Applicative f =>
+  EllipsoidReaderT f (Double -> Double)
+normalt =
+  (\s e lat -> _semiMajor e / sqrt (1 - s * sin lat ^ (2 :: Int))) <$> eccentricitySquared <*> readEllipsoid
 
 ----
 
@@ -288,72 +307,76 @@ earthGeo ::
   Applicative f =>
   EllipsoidReaderT f (ReifiedIso' ECEF LLH)
 earthGeo =
-  arrEllipsoidReader (\e -> Iso (
-    iso
-      (\(ECEF (XY x_ y_) h_) -> undefined)
-      (\(LLH (LL t_ n_) h_) -> undefined)
-  ))
-
-undefined = undefined
+  let f e2 a nt =
+        Iso (
+          iso
+            (\(ECEF (XY x_ y_) h_) -> 
+              let sq q = q ^ (2 :: Int)
+                  p2 = sq x_ + sq y_
+                  a2 = sq a
+                  e4 = sq e2
+                  zeta = (1 - e2) * (sq h_ / a2)
+                  rho = (p2 / a2 + zeta - e4) / 6
+                  rho2 = sq rho
+                  rho3 = rho * rho2
+                  s = e4 * zeta * p2 / (4 * a2)
+                  cbrt q = q ** (1 / 3)
+                  t = cbrt (s + rho3 + sqrt (s * (s + 2 * rho3)))
+                  u = rho + t + rho2 / t
+                  v = sqrt (sq u + e4 * zeta)
+                  w = e2 * (u + v - zeta) / (2 * v)
+                  kappa = 1 + e2 * (sqrt (u + v + sq w) + w) / (u + v)
+                  phi = atan (kappa * h_ / sqrt p2)
+                  norm = nt phi
+                  l = h_ + e2 * norm * sin phi
+              in LLH (LL phi (atan2 y_ x_)) (sqrt (l ^ (2 :: Int) + p2) - norm))
+            (\(LLH (LL t_ n_) h_) ->
+              let n = nt t_
+                  cs k = (n + h_) * cos t_ * k n_
+                  z_ = (n * (1 - e2) + h_) * sin t_
+              in ECEF (XY (cs cos) (cs sin)) z_)
+        )
+  in  f <$>
+      eccentricitySquared <*>
+      readSemiMajor <*>
+      normalt
 
 {-
-
-
-> earthToGeo WGS84 (999 *~ metre, 88888 *~ metre, 7777 *~ metre)
-(0.16477260829264312,1.5595579375715796,-6288597.323607219 m)
-
-> earthToGeo WGS84 ((-5014967.33) *~ metre, 2614625.24 *~ metre, 2938968.021 *~ metre)
-(0.4820000002381146,2.6609999992939435,99.99797226581722 m)
-
-> geoToEarth (Geodetic (27.65 *~ degree) (152.45 *~ degree) (100 *~ metre) WGS84)
-(-5012801.572508958 m,2615061.7970748367 m,2942250.433250758 m)
-
-> geoToEarth (Geodetic (0.482 *~ radian) (2.661 *~ radian) (100 *~ metre) WGS84)
-(-5014967.3340606885 m,2614625.2376137706 m,2938968.02060036 m)
-
-
-geoToEarth :: (Ellipsoid e) => Geodetic e -> ECEF
-geoToEarth geo = (
-      (n + h) * coslat * coslong,
-      (n + h) * coslat * sinlong,
-      (n * (_1 - eccentricity2 e) + h) * sinlat)
-   where 
-      n = normal e $ latitude geo
-      e = ellipsoid geo
-      coslat = cos $ latitude geo
-      coslong = cos $ longitude geo
-      sinlat = sin $ latitude geo
-      sinlong = sin $ longitude geo
-      h = altitude geo
-
-normal :: (Ellipsoid e) => e -> Angle Double -> Length Double
-normal e lat = majorRadius e / sqrt (_1 - eccentricity2 e * sin lat ^ pos2)
-
-eccentricity2 :: (Ellipsoid e) => e -> Dimensionless Double
-eccentricity2 e = _2 * f - (f * f) where f = flattening e
-
-
-earthToGeo :: (Ellipsoid e) => e -> ECEF -> (Angle Double, Angle Double, Length Double)
-earthToGeo e (x,y,z) = (phi, atan2 y x, sqrt (l ^ pos2 + p2) - norm)
+earthToGeo :: (GE.Ellipsoid e) => e -> GG.ECEF -> (Angle Double, Angle Double, Length Double)
+earthToGeo e (x_,y_,z_) = (phi, ND.atan2 y_ x_, ND.sqrt (l ND.^ pos2 ND.+ p2) ND.- norm)
    where
       -- Naming: numeric suffix inicates power. Hence x2 = x * x, x3 = x2 * x, etc.
-      p2 = x ^ pos2 + y ^ pos2
-      a = majorRadius e
-      a2 = a ^ pos2
-      e2 = eccentricity2 e
-      e4 = e2 ^ pos2
-      zeta = (_1-e2) * (z ^ pos2 / a2)
-      rho = (p2 / a2 + zeta - e4) / _6
-      rho2 = rho ^ pos2
-      rho3 = rho * rho2
-      s = e4 * zeta * p2 / (_4 * a2)
-      t = cbrt (s + rho3 + sqrt (s * (s + _2 * rho3)))
-      u = rho + t + rho2 / t
-      v = sqrt (u ^ pos2 + e4 * zeta)
-      w = e2 * (u + v - zeta) / (_2 * v)
-      kappa = _1 + e2 * (sqrt (u + v + w ^ pos2) + w) / (u + v)
-      phi = atan (kappa * z / sqrt p2)
-      norm = normal e phi
-      l = z + e2 * norm * sin phi
+      p2 = x_ ND.^ pos2 ND.+ y_ ND.^ pos2
+      a = GE.majorRadius e
+      a2 = a ND.^ pos2
+      e2 = GE.eccentricity2 e
+      e4 = e2 ND.^ pos2
+      zeta = (ND._1 ND.- e2) ND.* (z_ ND.^ pos2 ND./ a2)
+      rho = (p2 ND./ a2 ND.+ zeta ND.- e4) ND./ ND._6
+      rho2 = rho ND.^ pos2
+      rho3 = rho ND.* rho2
+      s = e4 ND.* zeta ND.* p2 ND./ (ND._4 ND.* a2)
+      t = ND.cbrt (s ND.+ rho3 ND.+ ND.sqrt (s ND.* (s ND.+ ND._2 ND.* rho3)))
+      u = rho ND.+ t ND.+ rho2 ND./ t
+      v = ND.sqrt (u ND.^ pos2 ND.+ e4 ND.* zeta)
+      w = e2 ND.* (u ND.+ v ND.- zeta) ND./ (ND._2 ND.* v)
+      kappa = ND._1 ND.+ e2 ND.* (ND.sqrt (u ND.+ v ND.+ w ND.^ pos2) ND.+ w) ND./ (u ND.+ v)
+      phi = ND.atan (kappa ND.* z_ ND./ ND.sqrt p2)
+      norm = GE.normal e phi
+      l = z_ ND.+ e2 ND.* norm ND.* ND.sin phi
 
+
+--  -27.5 152.45 100
+test1 :: LLH
+test1 = (^. runIso ((earthGeo ^. runEllipsoidReader) wgs84)) (ECEF (XY (-5019624) 2618621) (-2927516))
+
+test2 :: (Angle Double, Angle Double, Length Double)
+test2 = earthToGeo GE.WGS84 ((-5019624) *~ metre, 2618621 *~ metre, (-2927516) *~ metre)
+-- (-0.4799654447089294,2.66075442877903,100.20987554546446 m)
+
+test3 :: ECEF
+test3 = (^. from (runIso ((earthGeo ^. runEllipsoidReader) wgs84))) (LLH (LL 0.48 2.661) 100)
+
+test4 :: GE.ECEF
+test4 = GG.geoToEarth (GG.Geodetic (0.48 *~ radian) (2.661 *~ radian) (100 *~ metre) GE.WGS84)
 -}

@@ -32,6 +32,9 @@ library
                       base < 5 && >= 3
                     , lens >= 4.0
                     , transformers
+                    , geodetics
+                    , dimensional
+                    , numtype-dk
                     
   ghc-options:
                     -Wall
