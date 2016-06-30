@@ -3,13 +3,14 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
 module Data.Geo.Coordinate where
 
 import Control.Category((.))
 import Control.Applicative(Applicative((<*>), pure), liftA2, Alternative((<|>), empty))
 import Control.Category(id)
-import Control.Lens(makeClassy, Traversal', ReifiedIso', ReifiedIso(Iso), Iso', Lens', lens, iso, from, (^.), (&), Wrapped(Unwrapped, _Wrapped'), Rewrapped)
+import Control.Lens(makeClassy, makeWrapped, Traversal', ReifiedIso', ReifiedIso(Iso), Iso', Lens', lens, iso, from, (^.), (&), Wrapped(_Wrapped'))
 import Control.Monad(Monad((>>=), return), MonadPlus(mzero, mplus))
 import Control.Monad.Fix(MonadFix(mfix))
 import Control.Monad.IO.Class(MonadIO(liftIO))
@@ -81,6 +82,14 @@ data Ellipsoid =
   } deriving (Eq, Ord, Show)
 
 makeClassy ''Ellipsoid
+
+semiMinor ::
+  HasEllipsoid c =>
+  c
+  -> Double
+semiMinor e =
+  let Ellipsoid m f = e ^. ellipsoid
+  in m * (1 - 1 / f)
   
 flatteningPreservingSemiMinor ::
   Lens'
@@ -110,18 +119,10 @@ wgs84 =
 newtype EllipsoidReaderT f a =
   EllipsoidReaderT (Ellipsoid -> f a)
 
+makeWrapped ''EllipsoidReaderT
+
 type EllipsoidReader a =
   EllipsoidReaderT Identity a
-
-instance (t ~ EllipsoidReaderT f b) => Rewrapped (EllipsoidReaderT f a) t
-
-instance Wrapped (EllipsoidReaderT f a) where
-  type Unwrapped (EllipsoidReaderT f a) =
-    Ellipsoid -> f a
-  _Wrapped' =
-    iso
-      (\(EllipsoidReaderT k) -> k)
-      EllipsoidReaderT
 
 runEllipsoidReader ::
   Iso'
@@ -226,14 +227,6 @@ readSemiMinor ::
   EllipsoidReaderT f Double
 readSemiMinor =
   semiMinor <$> readEllipsoid
-
-semiMinor ::
-  HasEllipsoid c =>
-  c
-  -> Double
-semiMinor e =
-  let Ellipsoid m f = e ^. ellipsoid
-  in m * (1 - 1 / f)
 
 eccentricitySquared ::
   Applicative f =>
