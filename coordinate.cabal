@@ -35,6 +35,7 @@ library
                     , geodetics
                     , dimensional
                     , numtype-dk
+                    , comonad
                     
   ghc-options:
                     -Wall

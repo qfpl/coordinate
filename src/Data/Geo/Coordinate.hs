@@ -10,7 +10,7 @@ module Data.Geo.Coordinate where
 import Control.Category((.))
 import Control.Applicative(Applicative((<*>), pure), liftA2, Alternative((<|>), empty))
 import Control.Category(id)
-import Control.Lens(makeClassy, makeWrapped, Traversal', ReifiedIso', ReifiedIso(Iso), Iso', Lens', lens, iso, from, (^.), (&), Wrapped(_Wrapped'))
+import Control.Lens(makeClassy, makeWrapped, involuted, Traversal', ReifiedIso', ReifiedIso(Iso), Iso', Lens', lens, iso, from, (^.), (&), Wrapped(_Wrapped'))
 import Control.Monad(Monad((>>=), return), MonadPlus(mzero, mplus))
 import Control.Monad.Fix(MonadFix(mfix))
 import Control.Monad.IO.Class(MonadIO(liftIO))
@@ -20,8 +20,9 @@ import Control.Monad.Zip(MonadZip(mzip))
 import Data.Eq(Eq)
 import Data.Functor(Functor(fmap), (<$>))
 import Data.Functor.Identity(Identity(Identity, runIdentity))
+import Data.Int(Int)
 import Data.Ord(Ord)
-import Prelude hiding (id, (.)) -- (Show, Double, Num((*), (+), (-)), Fractional((/)))
+import Prelude(Show, Double, Num((*), (+), (-)), Fractional((/)), Floating(sin, cos, sqrt, atan, (**)), RealFloat(atan2), (^))
 
 class HasDoubles a where
   doubles ::
@@ -83,31 +84,17 @@ data Ellipsoid =
 
 makeClassy ''Ellipsoid
 
-semiMinor ::
-  HasEllipsoid c =>
-  c
-  -> Double
-semiMinor e =
-  let Ellipsoid m f = e ^. ellipsoid
-  in m * (1 - 1 / f)
-  
-flatteningPreservingSemiMinor ::
-  Lens'
-    Ellipsoid
-    Double
-flatteningPreservingSemiMinor =
-  lens
-    semiMinor
-    (\(Ellipsoid _ f) n -> Ellipsoid (n / (1 - 1 / f)) f)
+instance HasDoubles Ellipsoid where
+  doubles f (Ellipsoid s l) =
+    Ellipsoid <$> f s <*> f l
 
-semiMajorPreservingSemiMinor ::
+flatteningReciprocal ::
+  HasEllipsoid e =>
   Lens'
-    Ellipsoid
+    e
     Double
-semiMajorPreservingSemiMinor =
-  lens
-    semiMinor
-    (\(Ellipsoid m _) n -> Ellipsoid m (1 / (n / m + 1)))
+flatteningReciprocal =
+  flattening . involuted (1/)
 
 wgs84 ::
   Ellipsoid
@@ -216,42 +203,44 @@ readFlattening ::
 readFlattening =
   (^. flattening) <$> readEllipsoid
 
-readRecipFlattening ::
+readFlatteningReciprocal ::
   Applicative f =>
   EllipsoidReaderT f Double
-readRecipFlattening =
-  (\q -> 1 / q ^. flattening) <$> readEllipsoid
+readFlatteningReciprocal =
+  (^. flatteningReciprocal) <$> readEllipsoid
 
-readSemiMinor ::
+semiMinor ::
   Applicative f =>
   EllipsoidReaderT f Double
-readSemiMinor =
-  semiMinor <$> readEllipsoid
+semiMinor =
+  (\e -> let Ellipsoid m f = e ^. ellipsoid
+         in m * (1 - 1 / f)) <$> readEllipsoid
 
 eccentricitySquared ::
   Applicative f =>
   EllipsoidReaderT f Double
 eccentricitySquared =
-  (\f -> 2 * f - (f * f)) <$> readRecipFlattening
+  (\f -> 2 * f - (f * f)) <$> readFlatteningReciprocal
 
 eccentricitySquared' ::
-  Applicative f =>
+  Applicative f => 
   EllipsoidReaderT f Double
 eccentricitySquared' =
-  (\f -> (f * (2 - f)) / (1 - f * f)) <$> readRecipFlattening
+  (\f -> (f * (2 - f)) / (1 - f * f)) <$> readFlatteningReciprocal
 
-normal ::
+distributeNormal ::
   Applicative f =>
   Double
   -> EllipsoidReaderT f Double
-normal lat =
-  ($ lat) <$> normalt
+distributeNormal lat =
+  (\k -> k lat) <$> normal
 
-normalt ::
+normal ::
   Applicative f =>
   EllipsoidReaderT f (Double -> Double)
-normalt =
+normal =
   (\s e lat -> _semiMajor e / sqrt (1 - s * sin lat ^ (2 :: Int))) <$> eccentricitySquared <*> readEllipsoid
+
 
 ----
 
@@ -332,7 +321,7 @@ earthGeo =
   in  f <$>
       eccentricitySquared <*>
       readSemiMajor <*>
-      normalt
+      normal
 
 {-
 earthToGeo :: (GE.Ellipsoid e) => e -> GG.ECEF -> (Angle Double, Angle Double, Length Double)
@@ -372,4 +361,57 @@ test3 = (^. from (runIso ((earthGeo ^. runEllipsoidReader) wgs84))) (LLH (LL 0.4
 
 test4 :: GE.ECEF
 test4 = GG.geoToEarth (GG.Geodetic (0.48 *~ radian) (2.661 *~ radian) (100 *~ metre) GE.WGS84)
+-}
+
+{-
+
+
+flatteningPreservingSemiMinor ::
+  Lens'
+    Ellipsoid
+    Double
+flatteningPreservingSemiMinor =
+  lens
+    semiMinor
+    (\(Ellipsoid _ f) n -> Ellipsoid (n / (1 - 1 / f)) f)
+
+semiMajorPreservingSemiMinor ::
+  Lens'
+    Ellipsoid
+    Double
+semiMajorPreservingSemiMinor =
+  lens
+    semiMinor
+    (\(Ellipsoid m _) n -> Ellipsoid m (1 / (n / m + 1)))
+
+
+lensReader ::
+  Iso
+    (ReifiedLens' a b)
+    (ReifiedLens' a b)
+    (ReaderT a (Store b) a)
+    (ReaderT a (Store b) a)
+lensReader =
+  iso 
+    (\(Lens l) -> ReaderT (\a -> store (\b -> set l b a) (a ^. l)))
+    (\(ReaderT r) -> Lens (lens (pos . r) (\a b -> peek b (r a))))
+
+posL ::
+  Lens'
+    (Store a b)
+    a
+posL =
+  lens
+    pos
+    (\s -> store (`peek` s))
+
+peekL ::
+  Lens'
+    (Store a b)
+    (a -> b)
+peekL =
+  lens
+    (\s -> (`peek` s))
+    (\s a -> store a (pos s))
+
 -}
