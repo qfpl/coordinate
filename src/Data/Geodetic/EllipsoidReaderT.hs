@@ -161,13 +161,21 @@ semiMinor =
   (\f m -> m * (1 - f)) <$>
   readFlatteningReciprocal <*>
   readSemiMajor
-  
+
+-- |
+--
+-- >>> wgs84' eccentricitySquared
+-- 6.6943799901413165e-3
 eccentricitySquared ::
   Applicative f =>
   EllipsoidReaderT f Double
 eccentricitySquared =
   (\f -> 2 * f - (f * f)) <$> readFlatteningReciprocal
 
+-- |
+--
+-- >>> wgs84' eccentricitySquared'
+-- 6.694455244784511e-3
 eccentricitySquared' ::
   Applicative f => 
   EllipsoidReaderT f Double
@@ -181,6 +189,19 @@ distributeNormal ::
 distributeNormal t =
   (\k -> k t) <$> normal
 
+-- |
+--
+-- >>> wgs84' normal 7
+-- 6387371.845852088
+--
+-- >>> wgs84' normal 71
+-- 6397535.266650572
+--
+-- >>> wgs84' normal 711
+-- 6393308.675975408
+--
+-- >>> wgs84' normal (-7)
+-- 6387371.845852088
 normal ::
   Applicative f =>
   EllipsoidReaderT f (Double -> Double)
@@ -204,8 +225,14 @@ wgs84'' r =
 -- >>> ECEF (XY (-5019624) 2618621) (-2927516) ^. runIso (wgs84' earthGeo)
 -- LLH {ll = LL {_lat = -0.4799654447089294, _lon = 2.66075442877903}, _height = 100.20987554546446}
 --
+-- >>> ECEF (XY 9919623 (-3116612)) (-2396517) ^. runIso (wgs84' earthGeo)
+-- LLH {ll = LL {_lat = -0.22740831363634992, _lon = -0.30442061911398305}, _height = 4293252.6636643605}
+--
 -- >>> LLH (LL 0.48 2.661) 100 ^. from (runIso (wgs84' earthGeo))
 -- ECEF {_xy = XY {_x = -5020176.908575072, _y = 2617341.3240995244}, _z = 2927710.5079646683}
+--
+-- >>> LLH (LL (-0.22741) (-0.30442)) 4293252.66 ^. from (runIso (wgs84' earthGeo))
+-- ECEF {_xy = XY {_x = 9919621.069754401, _y = -3116604.645933256}, _z = -2396534.4668575544}
 earthGeo ::
   Applicative f =>
   EllipsoidReaderT f (ReifiedIso' ECEF LLH)
