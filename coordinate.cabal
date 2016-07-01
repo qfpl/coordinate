@@ -29,13 +29,9 @@ library
                     Haskell2010
 
   build-depends:
-                      base < 5 && >= 3
-                    , lens >= 4.0
-                    , transformers
-                    , geodetics
-                    , dimensional
-                    , numtype-dk
-                    , comonad
+                      base >= 4 && < 5
+                    , lens >= 4.0 && < 5.0
+                    , transformers >= 0.4 && < 0.6
                     
   ghc-options:
                     -Wall
@@ -47,7 +43,13 @@ library
                     src
 
   exposed-modules:
-                    Data.Geo.Coordinate
+                    Data.Geodetic.ECEF
+                    Data.Geodetic.Ellipsoid
+                    Data.Geodetic.EllipsoidReaderT
+                    Data.Geodetic.HasDoubles
+                    Data.Geodetic.LLH
+                    Data.Geodetic.LL
+                    Data.Geodetic.XY
 
 test-suite doctests
   type:
