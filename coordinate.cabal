@@ -43,6 +43,7 @@ library
                     src
 
   exposed-modules:
+                    Data.Geodetic
                     Data.Geodetic.ECEF
                     Data.Geodetic.Ellipsoid
                     Data.Geodetic.EllipsoidReaderT
