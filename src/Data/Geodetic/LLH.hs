@@ -5,7 +5,10 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FunctionalDependencies #-}
 
-module Data.Geodetic.LLH where
+module Data.Geodetic.LLH(
+  LLH(..)
+, HasLLH(..)
+) where
 
 import Control.Applicative(Applicative((<*>)))
 import Control.Lens(makeClassy, lens)

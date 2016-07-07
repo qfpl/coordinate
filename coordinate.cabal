@@ -1,5 +1,5 @@
 name:               coordinate
-version:            0.1.0
+version:            0.1.1
 license:            BSD3
 license-file:       LICENCE
 author:             Tony Morris <ʇǝu˙sıɹɹoɯʇ@ןןǝʞsɐɥ>
@@ -37,7 +37,7 @@ library
                     -Wall
 
   default-extensions:
-                      NoImplicitPrelude
+                    NoImplicitPrelude
 
   hs-source-dirs:
                     src

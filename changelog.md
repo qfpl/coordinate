@@ -1,3 +1,7 @@
+0.1.1
+
+* Explicit export lists.
+
 0.1.0
 
 * A rewrite using `ECEF`, `XY, `LLH`, `LL` data types.

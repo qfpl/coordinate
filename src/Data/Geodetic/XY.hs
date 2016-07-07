@@ -1,7 +1,10 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Data.Geodetic.XY where
+module Data.Geodetic.XY(
+  XY(..)
+, HasXY(..)
+) where
 
 import Control.Applicative(Applicative((<*>)))
 import Control.Lens(makeClassy)

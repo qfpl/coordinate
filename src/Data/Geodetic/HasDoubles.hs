@@ -1,7 +1,9 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Data.Geodetic.HasDoubles where
+module Data.Geodetic.HasDoubles(
+  HasDoubles(..)
+) where
 
 import Control.Category(id)
 import Control.Lens(Traversal')
