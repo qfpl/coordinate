@@ -1,3 +1,7 @@
+0.1.0
+
+* A rewrite using `ECEF`, `XY, `LLH`, `LL` data types.
+
 0.0.21
 
 * fix modulo arithmetic for minutes, seconds.
