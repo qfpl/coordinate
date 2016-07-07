@@ -4,7 +4,7 @@
 
 0.1.0
 
-* A rewrite using `ECEF`, `XY, `LLH`, `LL` data types.
+* A rewrite using `ECEF`, `XY`, `LLH`, `LL` data types.
 
 0.0.21
 
