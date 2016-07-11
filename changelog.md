@@ -1,3 +1,7 @@
+0.1.2
+
+* More ellipsoids.
+
 0.1.1
 
 * Explicit export lists.
