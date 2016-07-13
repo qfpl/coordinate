@@ -16,6 +16,9 @@ import Data.Geodetic.HasDoubles(HasDoubles(doubles))
 import Data.Ord(Ord)
 import Prelude(Fractional((/)), Show, Double, pi, Num((*)))
 
+-- $setup
+-- >>> import Control.Lens
+
 data LL =
   LL {
     _lat ::
@@ -33,6 +36,13 @@ instance HasDoubles LL where
       f a <*>
       f o
 
+-- |
+--
+-- >>> ((27.34, 152.15) ^. degrees)
+-- LL {_lat = 0.47717301749524965, _lon = 2.6555184569093724}
+--
+-- >>> (degrees # LL 0.47717 2.65552)
+-- (27.33982711025749,152.15008841258037)
 degrees ::
   Iso'
     (Double, Double)
