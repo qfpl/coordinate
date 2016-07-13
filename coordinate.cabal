@@ -50,6 +50,7 @@ library
                     Data.Geodetic.HasDoubles
                     Data.Geodetic.LLH
                     Data.Geodetic.LL
+                    Data.Geodetic.Sphere
                     Data.Geodetic.XY
 
 test-suite doctests

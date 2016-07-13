@@ -1,6 +1,7 @@
 0.1.3
 
 * Functions to construct using degrees.
+* Added `Sphere` data type.
 
 0.1.2
 

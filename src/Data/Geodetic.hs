@@ -10,4 +10,5 @@ import Data.Geodetic.EllipsoidReaderT as G
 import Data.Geodetic.HasDoubles as G
 import Data.Geodetic.LLH as G
 import Data.Geodetic.LL as G
+import Data.Geodetic.Sphere as G
 import Data.Geodetic.XY as G
