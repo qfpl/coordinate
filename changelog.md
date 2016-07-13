@@ -1,10 +1,7 @@
-0.1.3
+0.1.2
 
 * Functions to construct using degrees.
 * Added `Sphere` data type.
-
-0.1.2
-
 * More ellipsoids.
 
 0.1.1
