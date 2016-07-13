@@ -1,3 +1,7 @@
+0.1.3
+
+* Functions to construct using degrees.
+
 0.1.2
 
 * More ellipsoids.

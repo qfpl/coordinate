@@ -1,22 +1,20 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE FunctionalDependencies #-}
 
 module Data.Geodetic.LL(
   LL(..)
 , HasLL(..)
+, degrees
+, (<◦>)
 ) where
 
 import Control.Applicative(Applicative((<*>)))
-import Control.Lens(makeClassy)
+import Control.Lens(makeClassy, Iso', iso, (^.))
 import Data.Eq(Eq)
 import Data.Functor((<$>))
 import Data.Geodetic.HasDoubles(HasDoubles(doubles))
 import Data.Ord(Ord)
-import Prelude(Show, Double)
+import Prelude(Fractional((/)), Show, Double, pi, Num((*)))
 
 data LL =
   LL {
@@ -34,3 +32,29 @@ instance HasDoubles LL where
     LL <$>
       f a <*>
       f o
+
+degrees ::
+  Iso'
+    (Double, Double)
+    LL
+degrees =
+  iso 
+    (\(t, n) -> let r a = a / 180 * pi
+                in  LL (r t) (r n))
+    (\(LL t n) -> let r a = a / pi * 180
+                  in  (r t, r n))
+
+-- |
+--
+-- >>> 27.34 <◦> 152.15
+-- LL {_lat = 0.47717301749524965, _lon = 2.6555184569093724}
+--
+-- >>> 61.94 <◦> (-152.15)
+-- LL {_lat = 1.0810569386852877, _lon = -2.6555184569093724}
+(<◦>) ::
+  Double
+  -> Double
+  -> LL
+t <◦> n =
+  (t, n) ^. degrees
+  
