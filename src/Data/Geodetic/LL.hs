@@ -8,13 +8,8 @@ module Data.Geodetic.LL(
 , (<◦>)
 ) where
 
-import Control.Applicative(Applicative((<*>)))
-import Control.Lens(makeClassy, Iso', iso, (^.))
-import Data.Eq(Eq)
-import Data.Functor((<$>))
 import Data.Geodetic.HasDoubles(HasDoubles(doubles))
-import Data.Ord(Ord)
-import Prelude(Fractional((/)), Show, Double, pi, Num((*)))
+import Papa
 
 -- $setup
 -- >>> import Control.Lens

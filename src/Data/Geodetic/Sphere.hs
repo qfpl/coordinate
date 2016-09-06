@@ -10,12 +10,8 @@ module Data.Geodetic.Sphere(
 , ellipsoidSphere
 ) where
 
-import Control.Lens(makeWrapped, Prism', prism')
-import Data.Eq(Eq((==)))
-import Data.Maybe(Maybe(Just, Nothing))
-import Data.Ord(Ord)
 import Data.Geodetic.Ellipsoid(Ellipsoid(Ellipsoid))
-import Prelude(Double, Show)
+import Papa
 
 -- $setup
 -- >>> import Control.Lens

@@ -25,24 +25,21 @@ module Data.Geodetic.EllipsoidReaderT(
 , earthGeo
 ) where
 
-import Control.Category((.))
-import Control.Applicative(Applicative((<*>), pure), liftA2, Alternative((<|>), empty))
-import Control.Lens(makeWrapped, (#), _Unwrapped, ReifiedIso', ReifiedIso(Iso), Iso', iso, from, (^.), (&), Wrapped(_Wrapped'))
-import Control.Monad(Monad((>>=), return), MonadPlus(mzero, mplus))
+import Control.Applicative(Alternative((<|>), empty), liftA2)
+import qualified Control.Monad as Monad(return, (>>=))
+import Control.Monad(MonadPlus(mzero, mplus))
 import Control.Monad.Fix(MonadFix(mfix))
 import Control.Monad.IO.Class(MonadIO(liftIO))
 import Control.Monad.Trans.Class(MonadTrans(lift))
 import Control.Monad.Trans.Reader(ReaderT)
 import Control.Monad.Zip(MonadZip(mzip))
-import Data.Functor(Functor(fmap), (<$>))
 import Data.Functor.Identity(Identity(Identity, runIdentity))
 import Data.Geodetic.ECEF(ECEF(..), HasECEF(z))
 import Data.Geodetic.Ellipsoid(Ellipsoid, HasEllipsoid(semiMajor, flattening), flatteningReciprocal, wgs84)
 import Data.Geodetic.LL(LL(LL), HasLL(lat, lon))
 import Data.Geodetic.LLH(LLH(LLH), HasLLH(height))
 import Data.Geodetic.XY(XY(XY), HasXY(x, y))
-import Data.Int(Int)
-import Prelude(Double, Num((*), (+), (-)), Fractional((/)), Floating(sin, cos, sqrt, atan, (**)), RealFloat(atan2), (^))
+import Papa
 
 -- $setup
 -- >>> import Control.Lens(ReifiedIso(runIso))
@@ -98,9 +95,9 @@ instance Applicative f => Applicative (EllipsoidReaderT f) where
 
 instance Monad f => Monad (EllipsoidReaderT f) where
   return =
-    EllipsoidReaderT . return . return
+    EllipsoidReaderT . Monad.return . Monad.return
   EllipsoidReaderT k >>= f =
-    EllipsoidReaderT (\e -> k e >>= \q -> e & f q ^. _Wrapped')
+    EllipsoidReaderT (\e -> k e Monad.>>= \q -> e & f q ^. _Wrapped')
 
 instance Alternative f => Alternative (EllipsoidReaderT f) where
   empty =

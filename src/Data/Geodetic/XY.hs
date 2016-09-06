@@ -6,13 +6,8 @@ module Data.Geodetic.XY(
 , HasXY(..)
 ) where
 
-import Control.Applicative(Applicative((<*>)))
-import Control.Lens(makeClassy)
-import Data.Eq(Eq)
-import Data.Functor((<$>))
 import Data.Geodetic.HasDoubles(HasDoubles(doubles))
-import Data.Ord(Ord)
-import Prelude(Show, Double)
+import Papa
 
 data XY =
   XY {

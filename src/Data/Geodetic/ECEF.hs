@@ -6,14 +6,9 @@ module Data.Geodetic.ECEF(
 , HasECEF(..)
 ) where
 
-import Control.Applicative(Applicative((<*>)))
-import Control.Lens(makeClassy, lens)
-import Data.Eq(Eq)
-import Data.Functor((<$>))
 import Data.Geodetic.HasDoubles(HasDoubles(doubles))
 import Data.Geodetic.XY(XY, HasXY(xY))
-import Data.Ord(Ord)
-import Prelude(Show, Double)
+import Papa
 
 data ECEF =
   ECEF {

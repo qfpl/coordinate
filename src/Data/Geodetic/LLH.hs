@@ -6,14 +6,9 @@ module Data.Geodetic.LLH(
 , HasLLH(..)
 ) where
 
-import Control.Applicative(Applicative((<*>)))
-import Control.Lens(makeClassy, lens)
-import Data.Eq(Eq)
-import Data.Functor((<$>))
 import Data.Geodetic.HasDoubles(HasDoubles(doubles))
-import Data.Geodetic.LL
-import Data.Ord(Ord)
-import Prelude(Show, Double)
+import Data.Geodetic.LL(HasLL(lL), LL)
+import Papa
 
 data LLH =
   LLH {

@@ -23,14 +23,8 @@ module Data.Geodetic.Ellipsoid(
 , clarke1880
 ) where
 
-import Control.Applicative(Applicative((<*>)))
-import Control.Category((.))
-import Control.Lens(makeClassy, Lens', involuted)
-import Data.Eq(Eq)
-import Data.Functor((<$>))
 import Data.Geodetic.HasDoubles(HasDoubles(doubles))
-import Data.Ord(Ord)
-import Prelude(Show, Double, (/))
+import Papa
 
 data Ellipsoid =
   Ellipsoid {

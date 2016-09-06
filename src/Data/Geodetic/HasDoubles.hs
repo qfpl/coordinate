@@ -5,9 +5,7 @@ module Data.Geodetic.HasDoubles(
   HasDoubles(..)
 ) where
 
-import Control.Category(id)
-import Control.Lens(Traversal')
-import Prelude(Double)
+import Papa
 
 class HasDoubles a where
   doubles ::
