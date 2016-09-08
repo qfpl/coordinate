@@ -933,9 +933,9 @@ instance (Profunctor p, Functor f) => Antipodal p f Coordinate where
     involuted
       (\c -> case c of
                NorthPole -> 
-                 NorthPole
-               SouthPole ->
                  SouthPole
+               SouthPole ->
+                 NorthPole
                Coordinate x ->
                  Coordinate (_Antipode # x))
 
