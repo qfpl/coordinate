@@ -1,3 +1,9 @@
+0.2
+
+* Depend on papa
+* Support GHC 8.4
+* Remove small_base flag
+
 0.1.2
 
 * Functions to construct using degrees.
